@@ -3,6 +3,7 @@ package provider
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -15,6 +16,13 @@ func mustCanonicalJSON(t *testing.T, v any) []byte {
 		t.Fatalf("marshal: %v", err)
 	}
 	return raw
+}
+
+func writeJSON(t *testing.T, w io.Writer, v any) {
+	t.Helper()
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		t.Errorf("encode: %v", err)
+	}
 }
 
 // fixedAsOf is the injected evaluation instant — no wall clock in assertions.

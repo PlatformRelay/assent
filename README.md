@@ -65,4 +65,5 @@ task check   # fmt + vet + lint + test
 
 ## License
 
-[MIT](LICENSE) — © 2026 Konrad Heimel.
+[Apache-2.0](LICENSE) — © 2026 Konrad Heimel. Same license family as Kubernetes and Argo CD:
+permissive, with an explicit patent grant.

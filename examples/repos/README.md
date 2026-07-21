@@ -12,3 +12,17 @@ repo shapes to generalize):
 | `topic-registry/` | YAML (one file per topic: name, owner, partitions, retention) | ownership, bounded change, no-destruction |
 | `service-catalog/` | JSON (single catalog file, many entries) | allow-listed fields, schema validity, multi-entry diffs |
 | `infra-vars/` | tfvars/HCL (per-env variable files) | environment split, HCL parsing, opaque-change fallback |
+
+## Open-source corpus candidates (OQ-16)
+
+Real public repos whose *shapes* we can test against — and potentially use as live demos —
+without any sanitization concerns:
+
+| Repo / format | Why it fits |
+| --- | --- |
+| [kubernetes/org](https://github.com/kubernetes/org) | the canonical public self-service repo: people PR themselves into orgs/teams (YAML), automation validates & merges — practically our use case, run by Prow today |
+| [JulieOps](https://github.com/kafka-ops/julie) / [kafka-gitops](https://github.com/devshawn/kafka-gitops) topology files | public Kafka topic/ACL descriptor formats — realistic topic-registry shapes |
+| [octoDNS](https://github.com/octodns/octodns) zone configs | YAML DNS records: ownership + bounded-change + no-destruction map perfectly |
+| [Backstage](https://backstage.io) `catalog-info.yaml` | service-catalog JSON/YAML entries with owner fields |
+| [GitHub safe-settings](https://github.com/github/safe-settings) org config | org/repo settings as YAML, reviewed via PR |
+| [conda-forge](https://github.com/conda-forge) feedstocks / Homebrew formula bumps | public precedent for bot-automerged config PRs (prior art for Phase 1.4 too) |

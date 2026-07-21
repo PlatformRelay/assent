@@ -15,7 +15,9 @@ nav:
   - Architecture:
       - Context: architecture/c4-context.md
       - Containers: architecture/c4-container.md
+  - Usage (imagined): usage/walkthrough.md
   - Planning:
       - Meta-plan: planning/meta-plan.md
       - Open questions: planning/open-questions.md
+      - Naming: planning/naming.md
   - Decisions: decisions/decisions.md

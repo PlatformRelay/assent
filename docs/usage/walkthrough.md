@@ -1,0 +1,110 @@
+# Imagined walkthrough — adopting verdict-2 on a topic registry
+
+> **This is design fiction.** Nothing below is implemented; it exists so we can *feel* the
+> UX before freezing contracts (meta-plan Phase 3). Where a command or field survives review,
+> it becomes a spec REQ. Config semantics: [ADR-0010](../adr/0010-config-files-repo-layout.md);
+> effects: [ADR-0007](../adr/0007-rule-effects-decision-aggregation.md).
+
+## The repo
+
+`topic-registry` — one YAML file per Kafka topic:
+
+```yaml
+# topics/prod/orders.yaml
+name: orders
+owner: team-orders
+partitions: 12
+retentionMs: 604800000
+```
+
+Today every MR waits for a platform engineer. Goal: routine changes merge themselves.
+
+## Step 1 — init (5 min)
+
+```console
+$ verdict2 init --sample topic-registry
+created .verdict/config.yaml        (environments: prod/dev by path; class: kafka-topic)
+created .verdict/bindings.yaml      (kafka-topic -> pack "topics", thresholds dev=10 prod=4)
+created .verdict/packs/topics/      (starter rules: ownership, bounded-change, no-deletion)
+created .verdict/tests/topics/      (passing fixtures for every starter rule)
+next: verdict2 test && verdict2 scan --since 90d
+```
+
+## Step 2 — make a rule yours
+
+Edit the starter pack (`.verdict/packs/topics/rules/safety.yaml`), e.g. cap partitions via
+your quota provider and challenge retention shrinks — see the full rule file example in
+ADR-0010. Wire your company's permission source in `config.yaml`:
+
+```yaml
+providers:
+  author: { type: builtin/gitlab-groups }        # swap for http/exec/grpc — ADR-0004
+```
+
+## Step 3 — test the policy like code
+
+```console
+$ verdict2 test
+PACK topics
+  ✓ partition-increase-ok            APPROVE            (2 vouched, score 1/10)
+  ✓ partition-decrease-challenged    REVIEW: challenge  retention-shrink-challenge
+  ✓ topic-delete-blocked             BLOCK              no-topic-deletion
+  ✗ foreign-topic-edit               expected REVIEW, got APPROVE
+      ownership: facts.author.groups fixture lists team-orders; entry owner is team-billing
+      -> did you mean expect: REVIEW (uncovered)?  see .verdict/tests/topics/foreign-topic-edit/
+4 fixtures, 3 passed, 1 failed
+```
+
+## Step 4 — backtest before trusting it
+
+```console
+$ verdict2 scan --since 90d --out reports/
+scanned 214 MRs (2026-04-22..2026-07-21)
+$ verdict2 stats reports/
+outcome      count   %          top rules firing
+APPROVE        131   61%        bounded-change/partition-increase (88)
+REVIEW          71   33%        retention-shrink-challenge (24), uncovered-change (31)
+BLOCK           12    6%        no-topic-deletion (12)
+would-have-automerged: 61% · median score 2 · 0 nondeterministic re-runs
+```
+
+61% automerge on day one, and the 12 blocks are all real topic deletions. Ship it.
+
+## Step 5 — wire CI (GitLab first)
+
+```yaml
+# .gitlab-ci.yml
+verdict:
+  image: ghcr.io/<org>/verdict2:v0
+  rules: [{ if: $CI_MERGE_REQUEST_IID }]
+  script: [verdict2 run]        # MR context from CI env; token from CI variable
+```
+
+## Step 6 — the contributor experience
+
+A dev bumps `partitions: 12 -> 24` on their own topic in dev: pipeline runs, the MR gets a
+summary comment ("APPROVE — 1 change vouched, score 1/10"), approval, and merges. Nobody was
+interrupted.
+
+The same dev shrinks retention on a prod topic: verdict-2 opens a **resolvable thread** —
+headline message, then collapsible *"Why this check exists & how to fix"* (with the rule's
+`docs.url`) and *"Evaluation details"* sections ([ADR-0012](../adr/0012-presentation-templates-debug.md)).
+They resolve the thread ("intentional, ticket TOPIC-123"), the re-run sees all threads
+resolved, and the MR proceeds.
+
+Something weird? Anyone can ask locally:
+
+```console
+$ verdict2 explain --mr 481
+change topics/prod/orders.yaml /retentionMs modify 604800000 -> 86400000
+  class kafka-topic · env prod · binding -> packs [topics, topics-strict] threshold 4
+  ✓ matched retention-shrink-challenge   assert "new < old" = true -> effect challenge
+  ✗ not matched partition-increase      (path mismatch)
+aggregation: no block · 1 unresolved challenge -> REVIEW
+```
+
+## What this walkthrough commits us to
+
+`init` with runnable samples · fixture tests with decision-level asserts and helpful failure
+hints · `scan`/`stats` for evidence-based rollout · one-line CI install · rendered comments
+with expandable docs/debug · `explain` that answers "why" without reading Go code.

@@ -1,26 +1,27 @@
-# DRAFT — illustrative Kyverno-style declarative rule; same archetype as
-# ../rego/bounded_change.rego. Schema is frozen in meta-plan Phase 3 (see OQ-3).
-apiVersion: policy.verdict2.dev/v1alpha1
+# DRAFT — illustrative rule in the YAML envelope (ADR-0002 v2 / ADR-0010); same archetype
+# as ../rego/bounded_change.rego. `assert` syntax is decided by Spike A (OQ-12).
+apiVersion: verdict2.dev/v1alpha1
 kind: MergePolicy
 metadata:
   name: bounded-change-partitions
 spec:
   rules:
-    - name: no-decrease
+    - name: partition-increase-within-quota
       match:
         changes:
           - path: "**/partitions"
             kind: modify
-      validate:
-        severity: review
-        message: "partitions may not decrease ({{ old }} -> {{ new }})"
-        expr: "new >= old"
-    - name: within-quota
+      assert: "new >= old && new <= facts.quota.max_partitions"
+      effect: vouch          # predicate holds -> change is automerge-eligible (ADR-0007)
+      points: 1
+      docs:
+        url: https://example.com/policies/partitions
+        summary: "Partition increases within quota are safe; decreases are not possible in Kafka."
+    - name: partition-decrease
       match:
         changes:
           - path: "**/partitions"
             kind: modify
-      validate:
-        severity: review
-        message: "partitions {{ new }} exceeds quota {{ facts.quota.max_partitions }}"
-        expr: "new <= facts.quota.max_partitions"
+      assert: "new < old"    # predicate true -> effect applies
+      effect: block
+      message: "partitions may not decrease ({{ old }} -> {{ new }})"

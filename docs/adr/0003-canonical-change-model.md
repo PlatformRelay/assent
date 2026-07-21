@@ -33,6 +33,21 @@ differ emits `Change{path, kind: add|modify|delete, old, new}` entries plus file
 HCL caveat to spec precisely: tfvars are literal-only (easy); full HCL with expressions is
 represented but expression *evaluation* is out of scope for v1.
 
+### Deletions and renames are first-class
+
+- **Entry deletion** (a map key / resource removed within a file) emits `delete` with the full
+  old value — so "topic is being deleted" is a plain match, and packs can attach `block` or
+  `challenge` effects to it (never silently folded into a modify).
+- **File events** (`added | deleted | renamed | modified | opaque`) are tracked alongside
+  field changes; file renames use git rename detection and preserve identity (`from`/`to`), so
+  a rename is not reported as delete-everything + add-everything.
+- **Resource renames** (entry key changes but the value is identical/similar) are detected
+  heuristically within a file: a `delete`+`add` pair with equal (or near-equal) values is
+  folded into `rename {oldPath, newPath}`. Policies decide what a rename means (often:
+  `challenge` — renames of live resources are usually destructive downstream). The heuristic's
+  similarity threshold and its failure mode (fall back to the raw delete+add pair, which is
+  *stricter*) must be golden-tested exhaustively — spec'd in Phase 3.
+
 ## Consequences
 
 - Policies are portable across formats and repos; the ChangeSet schema joins PolicyInput as a

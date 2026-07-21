@@ -14,9 +14,12 @@ has an exit gate — we do not start implementation epics until Phase 4's gate p
 
 Collect the raw material the specs will be distilled from:
 
-1. **Sample repos** — operator provides representative self-service repo shapes (topic-style
-   YAML, catalog JSON, tfvars). We *re-create generic equivalents* under `examples/repos/` —
-   never verbatim copies of any private content (D-002).
+1. **Sample repos** — operator provides 2–3 further representative self-service repo shapes
+   (topic-style YAML, catalog JSON, tfvars); we *re-create generic equivalents* under
+   `examples/repos/` — never verbatim copies of any private content (D-002/D-008). In
+   parallel, curate **open-source corpora** (kubernetes/org, JulieOps topologies, octoDNS
+   zones, Backstage catalogs — candidates in `examples/repos/README.md`, OQ-16) as public
+   test targets and demos.
 2. **Rule archetype inventory** — enumerate every rule class the archetypes in vision.md must
    generalize; for each: inputs needed (change paths, facts, permissions), decision semantics,
    failure mode. This becomes the acceptance bar for the policy frontends.

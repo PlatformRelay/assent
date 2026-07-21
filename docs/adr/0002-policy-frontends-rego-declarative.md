@@ -1,51 +1,71 @@
-# ADR-0002: Policy frontends: Rego + Kyverno-style declarative YAML over one engine
+# ADR-0002: Policy surface: one Kyverno-style YAML envelope, pluggable expression backends
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
-| **Date** | 2026-07-21 |
+| **Status** | Proposed (v2 — supersedes the "two parallel frontends" draft of this ADR) |
+| **Date** | 2026-07-21 (revised) |
 | **Deciders** | Konrad Heimel |
-| **Context links** | [ADR-0003 change model](0003-canonical-change-model.md) · [ADR-0004 plugins](0004-plugin-architecture.md) |
+| **Context links** | [ADR-0003 change model](0003-canonical-change-model.md) · [ADR-0007 effects](0007-rule-effects-decision-aggregation.md) · [ADR-0008 routing](0008-change-classification-routing-scope.md) · D-006 |
 
 ## Context
 
-Adopters must express merge policies themselves. Two audiences exist: policy engineers who
-already speak **Rego** (OPA is the lingua franca of policy-as-code) and platform teams who
-prefer **declarative YAML** in the style of Kyverno — pattern-match on the change, state the
-constraint, no programming. Forcing either audience into the other's syntax loses half the
-market. Both must be deterministic, testable, and evaluate against the same input document.
+The first draft proposed Rego and declarative YAML as two *parallel, equivalent* frontends.
+Review verdict: **too much** — two documentation surfaces, an equivalence test matrix, and
+permanent feature drift between them. At the same time, YAML-only hits an expressiveness
+ceiling and Rego-only scares off the primary audience (operator preference is Kyverno-style —
+D-006).
+
+The unlock: routing, matching, effects, risk points, and scope (ADR-0007/0008) are
+**structural** concerns that belong in a declarative envelope no matter what — Rego should
+never own orchestration. Only the *predicate inside a rule* needs an expression language. That
+part can be pluggable without creating a second frontend.
 
 ## Options
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| Rego only | maximal power, OPA tooling (`opa test`, coverage) for free | steep for casual adopters; "wall of Rego" scares small repos |
-| Declarative YAML only | lowest entry barrier | hits expressiveness ceiling fast (cross-entry checks, arithmetic); we end up inventing a bad programming language in YAML |
-| **Both, layered: YAML frontend compiles/lowers to the same evaluation semantics as Rego; one engine, one input contract** | each audience served; YAML rules stay simple *because* the escape hatch to Rego exists; single decision/finding model | two surfaces to document and test; YAML-to-engine lowering must be spec'd precisely |
-| CEL expressions embedded in YAML | familiar from k8s ValidatingAdmissionPolicy | still a third syntax; doesn't remove the need for either full Rego or full YAML patterns |
+| Two parallel frontends (v1 draft) | each audience fully served | double docs/tests, drift; rejected |
+| Rego only | max power, OPA tooling | wall of Rego; loses the preferred UX |
+| YAML only (assertion trees) | lowest barrier | ceiling: cross-entry logic, branch-state conventions get ugly |
+| **One YAML envelope; rule bodies choose a backend: `assert` (assertion tree / CEL) or `rego` (module escape hatch)** | one document model, one doc set; 80% never see Rego; Rego available where it earns its keep; backends are tiers, not equivalents — no equivalence testing | envelope schema must be designed carefully; two expression languages to document (but scoped to rule bodies) |
+| Call Kyverno proper as engine | reuse mature engine | Kyverno's engine is K8s-native (GVK match, admission semantics, CRD lifecycle) — we'd fake AdmissionReviews and lose old/new diff semantics; wrong fit |
 
 ## Decision (proposed)
 
-**Both frontends over one engine.** The engine consumes a single canonical **PolicyInput**
-document (change model + facts + MR metadata, [ADR-0003](0003-canonical-change-model.md)) and
-produces the same **Decision + Findings** contract regardless of frontend. The declarative
-YAML frontend covers the ~80% archetypes (ownership, bounded change, allow-listed fields,
-no-destruction, environment split); Rego is the escape hatch for the rest. A YAML rule and a
-Rego rule are indistinguishable downstream.
+**One policy document format** — Kyverno-inspired YAML (`MergePolicy` + `RulesetBinding`
+kinds). The envelope owns: match/classification hooks, environment routing, rule scope,
+effects, risk points, messages. Each rule's predicate is one of:
 
-Open sub-questions for the planning phase: exact YAML schema (Kyverno-inspired
-`match`/`validate` vs. custom), whether YAML lowers *to generated Rego* (one evaluator) or to
-a native evaluator (two evaluators, one contract), and how `opa test` integrates with the
-built-in fixture harness.
+1. **`assert`** — declarative assertion tree / CEL expression. Default tier; covers the
+   archetypes. Implementation candidates (Spike A decides, OQ-11):
+   **[kyverno-json](https://kyverno.github.io/kyverno-json/latest/go-library/)** embedded as a
+   Go library (`pkg/jsonengine`) — genuine Kyverno assertion-tree semantics and syntax
+   familiarity for free — vs. a native **CEL** (`cel-go`) evaluator (Kyverno itself moved to
+   CEL for its new ValidatingPolicy types, so CEL *is* Kyverno-style now). Either way the
+   engine is wrapped behind our own interface so the choice is reversible.
+2. **`rego`** — inline or file-referenced Rego module (embedded OPA), receiving the same
+   PolicyInput scope and returning findings data only. Escape hatch for cross-entry checks,
+   complex derivations, whole-branch conventions.
+
+Rego **never** controls routing, effects, or aggregation — it computes; the envelope decides.
+Downstream (engine, findings, harness, docs) a rule is a rule regardless of backend.
 
 ## Consequences
 
-- The PolicyInput document schema becomes the most important public contract of the project —
-  spec'd first, versioned, and frozen per major version.
-- Every example in `examples/` must exist in **both** syntaxes where expressible, as living
-  documentation of the equivalence.
+- The "isn't this too much?" problem dissolves: there is exactly one frontend; backends are
+  tiers of one surface, documented as "start with `assert`, graduate to `rego`".
+- Syntax familiarity is deliberately *stolen* from Kyverno (match/exclude, validate, message
+  templating, `apiVersion`/`kind` envelope); semantics for git-diff payloads are ours.
+- Chainsaw is the wrong layer for the engine (it's a K8s e2e test orchestrator), but its
+  declarative assert-file UX is the model for our **policy test harness** fixture format.
+- Whether `assert` is implemented on kyverno-json or cel-go is an implementation detail
+  hidden behind the wrapper — but the *authored syntax* it implies is not; Spike A must fix
+  the syntax before Phase 3 freezes contracts.
 
 ## Counterpoints considered
 
-- *"Two frontends = double maintenance."* — Mitigated if YAML lowers to Rego (single
-  evaluator); this is the leading sub-option and will be decided by spike + trade-off matrix.
+- *"Just use conftest/Rego, it exists."* — conftest proves Rego-over-config-files works, but
+  offers no envelope: no effects, routing, risk, or resolvable-thread semantics. We'd rebuild
+  the envelope anyway — the actual product — and inherit the steep default UX.
+- *"kyverno-json is pre-1.0 with a small maintainer pool."* — True; that's why it sits behind
+  our wrapper interface with cel-go as the recorded fallback (OQ-11).

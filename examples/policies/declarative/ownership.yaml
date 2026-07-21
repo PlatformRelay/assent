@@ -1,7 +1,7 @@
 # DRAFT — archetype "ownership": authors may only modify entries owned by a group they
 # belong to. Membership arrives as a fact from a permission provider (ADR-0004):
 # Keycloak, LDAP, GitLab/GitHub groups, or an ownership file — the rule doesn't care.
-apiVersion: policy.verdict2.dev/v1alpha1
+apiVersion: verdict2.dev/v1alpha1
 kind: MergePolicy
 metadata:
   name: ownership
@@ -9,9 +9,15 @@ spec:
   rules:
     - name: author-owns-entry
       match:
-        changes:
-          - path: "topics/**"
-      validate:
-        severity: review
-        message: "author is not a member of owning group {{ entry.owner }}"
-        expr: "entry.owner in facts.author.groups"
+        classes: [kafka-topic]
+      assert: "entry.owner in facts.author.groups"
+      effect: vouch
+      points: 0
+    - name: foreign-entry-challenge
+      match:
+        classes: [kafka-topic]
+      assert: "!(entry.owner in facts.author.groups)"
+      effect: challenge
+      message: "You are not in the owning group `{{ entry.owner }}` — owner must resolve this thread."
+      docs:
+        url: https://example.com/policies/ownership

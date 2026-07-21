@@ -37,10 +37,20 @@ untested, invisible to the people governed by it, and dies with its author.
 
 ### One decision, explained
 
-For each MR the engine produces exactly one decision — `APPROVE`, `REVIEW` (human required,
-with findings posted as resolvable threads), or `BLOCK` — plus structured findings that explain
-*why*, in terms of the rules that fired. Determinism is a hard requirement: the same diff, repo
-state, and facts always produce the same decision. No LLM in the decision path.
+For each MR the engine produces exactly one decision — `APPROVE`, `REVIEW` (human required),
+or `BLOCK` — aggregated from per-rule **effects**: informational comments, resolvable
+"are you sure?" challenge threads, hard blocks, positive vouches that make changes
+automerge-eligible, and **risk points** summed against per-environment thresholds
+(ADR-0007). Findings render with expandable docs/debug sections (ADR-0012) so every decision
+explains itself. Determinism is a hard requirement: the same diff, repo state, and facts
+always produce the same decision. No LLM in the decision path.
+
+### Modes
+
+The same pipeline runs as: a **CI job** (primary), a **local dry-run** ("what would the gate
+say?"), **explain** (full per-rule trace), a **historical scan** over past MRs (backtesting a
+policy before trusting it, feeding `stats` — no database, just report artifacts), and later a
+**webhook service** for orgs that prefer event-driven operation (ADR-0009).
 
 ## What makes it different
 

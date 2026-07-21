@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 		return bin
 	}
 	toyExecBin = build("toyexec", "./toyexec")
-	_ = maliciousExecBin
+	maliciousExecBin = build("maliciousexec", "./maliciousexec")
 
 	os.Exit(m.Run())
 }

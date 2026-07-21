@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: prove/require envelope shapes per ADR-0017 §2/§5; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0002 policy surface](0002-policy-frontends-rego-declarative.md) · [ADR-0007 effects](0007-rule-effects-decision-aggregation.md) · [ADR-0008 routing](0008-change-classification-routing-scope.md) · OQ-5 |

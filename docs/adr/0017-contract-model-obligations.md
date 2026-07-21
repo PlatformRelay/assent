@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (P2-E5 / D-016; north-star <1h still PENDING operator timed run — OQ-24) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | supersedes/reshapes parts of [0003](0003-canonical-change-model.md) · [0005](0005-forge-abstraction-gitlab-first.md) · [0007](0007-rule-effects-decision-aggregation.md) · [0009](0009-execution-modes.md) · [0010](0010-config-files-repo-layout.md) · [0011](0011-core-ports-and-contracts.md) · [0014](0014-adopter-test-format.md) · [0015](0015-trust-boundaries-merge-integrity.md) · full design roast 2026-07-21 (P1-1..P1-8, P2-1..P2-10) · D-016 |

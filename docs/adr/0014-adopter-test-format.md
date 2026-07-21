@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: expect.yaml → obligation/exact defaults per ADR-0017; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0006 testing](0006-testing-strategy.md) · [ADR-0007 effects](0007-rule-effects-decision-aggregation.md) · [ADR-0010 config](0010-config-files-repo-layout.md) · D-010 |

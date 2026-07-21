@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: Reconcile + schemas-are-API per ADR-0017 §1/§7; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0003](0003-canonical-change-model.md) · [ADR-0004](0004-plugin-architecture.md) · [ADR-0005](0005-forge-abstraction-gitlab-first.md) · [ADR-0007](0007-rule-effects-decision-aggregation.md) · [ADR-0009](0009-execution-modes.md) |

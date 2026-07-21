@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: vouch/coverage superseded by ADR-0017 §2; challenge authz by §3; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0002 policy surface](0002-policy-frontends-rego-declarative.md) · [ADR-0008 routing](0008-change-classification-routing-scope.md) · [ADR-0005 forge](0005-forge-abstraction-gitlab-first.md) |

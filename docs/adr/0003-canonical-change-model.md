@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: EntryRef / matcher domains per ADR-0017 §5; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0002 policy frontends](0002-policy-frontends-rego-declarative.md) |

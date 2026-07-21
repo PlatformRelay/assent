@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (P2-E5 / D-015) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0012 presentation](0012-presentation-templates-debug.md) (supersedes its override mechanism) · [ADR-0013 assert/CEL](0013-assert-syntax-and-backend.md) · [ADR-0014 test format](0014-adopter-test-format.md) · [ADR-0015 §1](0015-trust-boundaries-merge-integrity.md) · D-012 · D-015 · design roast 2026-07-21 P1-6/P2-2 |

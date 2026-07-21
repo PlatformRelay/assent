@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: merge-result / max_age arming / typed providers per ADR-0017 §1/§4/§6; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0007 effects](0007-rule-effects-decision-aggregation.md) · [ADR-0008 routing](0008-change-classification-routing-scope.md) · [ADR-0009 modes](0009-execution-modes.md) · [ADR-0010 config](0010-config-files-repo-layout.md) · [ADR-0011 ports](0011-core-ports-and-contracts.md) · adversarial design review 2026-07-21 (findings F1, F3, F4, F5, F13, F14) |

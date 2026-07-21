@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (partial: one-shot arming restrictions per ADR-0017 §4; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0005 forge](0005-forge-abstraction-gitlab-first.md) · [ADR-0007 effects](0007-rule-effects-decision-aggregation.md) |

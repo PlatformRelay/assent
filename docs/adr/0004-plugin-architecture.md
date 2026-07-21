@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (HTTP/exec v1; gRPC deferred — Spike C / D-012; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0001 language](0001-language-go-single-binary.md) · [ADR-0002 policy frontends](0002-policy-frontends-rego-declarative.md) |

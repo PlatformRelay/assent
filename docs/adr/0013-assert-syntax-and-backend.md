@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed |
+| **Status** | Accepted (hybrid CEL-leaf trees on cel-go — Spike A; P2-E5) |
 | **Date** | 2026-07-21 |
 | **Deciders** | Konrad Heimel |
 | **Context links** | [ADR-0002 policy surface](0002-policy-frontends-rego-declarative.md) · [ADR-0010 config files](0010-config-files-repo-layout.md) · [ADR-0011 ports](0011-core-ports-and-contracts.md) · [ADR-0012 presentation](0012-presentation-templates-debug.md) · OQ-11 · OQ-12 · D-006 · [appendix: syntax gallery](0013-appendix-syntax-gallery.md) |

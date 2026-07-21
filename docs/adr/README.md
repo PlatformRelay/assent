@@ -24,3 +24,4 @@ and spikes in the planning workflow (see [`../planning/meta-plan.md`](../plannin
 | [0014](0014-adopter-test-format.md) | Adopter test format — policy tests as a public contract | Proposed |
 | [0015](0015-trust-boundaries-merge-integrity.md) | Trust boundaries and merge-time integrity (from the 2026-07-21 adversarial review) | Proposed |
 | [0016](0016-presentation-theming.md) | Presentation theming: config knobs, slots, CEL messages, render contract | Proposed |
+| [0017](0017-contract-model-obligations.md) | Contract model: governed subjects, required obligations, typed facts, preconditioned reconciliation | Proposed |

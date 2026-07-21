@@ -1,0 +1,21 @@
+{
+  "apiVersion": "catalog/v1",
+  "services": [
+    {
+      "name": "inventory-projector",
+      "owner": "inventory-team",
+      "tier": 2,
+      "oncall": "inventory-rotation",
+      "endpoints": [],
+      "tags": ["stream-consumer"]
+    },
+    {
+      "name": "reporting-warehouse-loader",
+      "owner": "analytics-team",
+      "tier": 3,
+      "oncall": "analytics-rotation",
+      "endpoints": [],
+      "tags": ["batch", "nightly"]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "apiVersion": "catalog/v1",
+  "services": [
+    {
+      "name": "orders-api",
+      "owner": "orders-team",
+      "tier": 3,
+      "oncall": "orders-rotation",
+      "endpoints": ["https://orders.dev.example.com/api"],
+      "tags": ["checkout-path"]
+    },
+    {
+      "name": "checkout-session-svc",
+      "owner": "checkout-team",
+      "tier": 3,
+      "oncall": "checkout-rotation",
+      "endpoints": ["https://sessions.dev.example.com/api"],
+      "tags": ["prototype"]
+    }
+  ]
+}

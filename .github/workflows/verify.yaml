@@ -1,17 +1,41 @@
-# CI stub — becomes active once the repo is pushed (blocked on naming, D-001).
+# CI gate set (security review A-10): lint incl. gosec, secrets, vulns, tests+coverage.
 name: verify
 on:
   pull_request:
   push:
     branches: [main]
+permissions:
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans history
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - run: go vet ./...
+      - name: golangci-lint (incl. gosec)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: go test -race ./...
+      - name: coverage gate (>=90% on internal/, D-010)
+        run: |
+          if ls internal/*/*.go >/dev/null 2>&1; then
+            go test -coverprofile=cov.out ./internal/...
+            pct=$(go tool cover -func=cov.out | awk '/^total:/ {gsub("%","",$3); print $3}')
+            echo "coverage: ${pct}% (required: 90%)"
+            awk -v p="$pct" 'BEGIN { exit (p+0 >= 90 ? 0 : 1) }'
+          else
+            echo "no internal packages yet — gate armed, not applicable"
+          fi
       - run: CGO_ENABLED=0 go build ./...

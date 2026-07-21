@@ -12,7 +12,7 @@ REQ ID format: `REQ-<epic>-S<story>-<nn>` (e.g. `REQ-P1-E2-S01-01`).
 
 | ID | Epic | Spec | Status | Needs operator | Gate contribution |
 | --- | --- | --- | --- | --- | --- |
-| P1-E1 | Sample corpus: generalized repos + OSS corpus (OQ-16, D-008) | [spec](p1-e1-sample-corpus/spec.md) | Ready (S02 unblocked; S01 waits on operator) | yes (repo shapes) | fixtures for the archetype gate |
+| P1-E1 | Sample corpus: generalized repos + OSS corpus (OQ-16, D-008) | [spec](p1-e1-sample-corpus/spec.md) | Ready (S02 unblocked; S01 partially unblocked — 3 of ~5 source shapes provided, D-019) | yes (2 more repo shapes) | fixtures for the archetype gate |
 | P1-E2 | Rule-archetype inventory + success metric (OQ-25) | [spec](p1-e2-archetype-inventory/spec.md) | Ready | yes (holdout adjudication) | **the Phase-1 gate**: every archetype has example change + expected decision |
 | P1-E3 | Forge behaviour dossier: GitLab + GitHub (OQ-7/18/23) | [spec](p1-e3-forge-dossier/spec.md) | Ready | no | feeds ADR-0005/0017 acceptance |
 | P1-E4 | Prior-art review | [spec](p1-e4-prior-art/spec.md) | Ready | no | feeds ADR acceptance round |

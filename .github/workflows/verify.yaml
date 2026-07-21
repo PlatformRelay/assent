@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans history
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable # go.mod stays the minimum; CI runs latest stable (govulncheck needs it)
       - run: go vet ./...
       - name: golangci-lint (incl. gosec)
         uses: golangci/golangci-lint-action@v6

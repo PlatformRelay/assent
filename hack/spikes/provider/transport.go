@@ -49,7 +49,7 @@ func CallHTTP(ctx context.Context, url string, q FactQuery, timeout time.Duratio
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	return io.ReadAll(resp.Body)
 }
 

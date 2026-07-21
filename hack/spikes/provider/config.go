@@ -12,9 +12,9 @@ import (
 // grant before a provider may receive full old/new content (ADR-0017 §6).
 const CapabilityFullContent = "trusted-full-content"
 
-// ProviderConfig is the operator-authored declaration of one provider: what
-// it outputs and what slices of the change it may see.
-type ProviderConfig struct {
+// Config is the operator-authored declaration of one provider: what it
+// outputs and what slices of the change it may see.
+type Config struct {
 	Name     string `json:"name"`
 	Requests struct {
 		Values struct {
@@ -28,15 +28,15 @@ type ProviderConfig struct {
 // LoadProviderConfig parses and validates a provider declaration. A provider
 // requesting full old/new content without the explicit trusted capability is
 // refused here — before any query is ever built.
-func LoadProviderConfig(raw []byte) (ProviderConfig, error) {
-	var cfg ProviderConfig
+func LoadProviderConfig(raw []byte) (Config, error) {
+	var cfg Config
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&cfg); err != nil {
-		return ProviderConfig{}, fmt.Errorf("provider config: %w", err)
+		return Config{}, fmt.Errorf("provider config: %w", err)
 	}
 	if cfg.Requests.FullContent && !slices.Contains(cfg.Capabilities, CapabilityFullContent) {
-		return ProviderConfig{}, fmt.Errorf(
+		return Config{}, fmt.Errorf(
 			"provider %q requests full old/new content but lacks the %q capability — refused",
 			cfg.Name, CapabilityFullContent)
 	}
@@ -52,7 +52,7 @@ type ValueChange struct {
 // BuildQuery assembles the minimized FactQuery: the projections are the
 // intersection of what the provider declared and what the change actually
 // touched — undeclared content never enters the request.
-func BuildQuery(cfg ProviderConfig, queryID string, asOf time.Time, subject Subject, outputs []string, change map[string]ValueChange) FactQuery {
+func BuildQuery(cfg Config, queryID string, asOf time.Time, subject Subject, outputs []string, change map[string]ValueChange) FactQuery {
 	q := FactQuery{
 		APIVersion: APIVersion,
 		Kind:       KindFactQuery,

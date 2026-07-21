@@ -21,16 +21,16 @@ func TestStates(t *testing.T) {
 	release := make(chan struct{})
 
 	handlers := map[string]http.Handler{
-		"timeout": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		"timeout": http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			select {
 			case <-release:
 			case <-r.Context().Done():
 			}
 		}),
-		"garbage": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		"garbage": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, _ = w.Write([]byte("{{{ not json"))
 		}),
-		"stale": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		"stale": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			resp := ToyAnswer(q)
 			stale := q.AsOf.Add(-time.Minute)
 			for i := range resp.Facts {

@@ -6,6 +6,7 @@ package provider
 
 import "time"
 
+// Envelope constants: every serialized form carries apiVersion + kind.
 const (
 	APIVersion       = "provider.assent.dev/v1alpha1"
 	KindFactQuery    = "FactQuery"
@@ -20,6 +21,7 @@ const (
 	StateExpired     = "expired"
 )
 
+// Subject identifies who or what a fact is about.
 type Subject struct {
 	Kind string `json:"kind"`
 	ID   string `json:"id"`
@@ -33,10 +35,12 @@ type ValueProjection struct {
 	New     any    `json:"new,omitempty"`
 }
 
+// Projections groups the declared change slices carried by a query.
 type Projections struct {
 	Values []ValueProjection `json:"values,omitempty"`
 }
 
+// FactQuery is the request envelope the host sends to a provider.
 type FactQuery struct {
 	APIVersion  string      `json:"apiVersion"`
 	Kind        string      `json:"kind"`
@@ -57,6 +61,8 @@ type Declaration struct {
 	MaxAge      string `json:"maxAge"`
 }
 
+// Fact is one typed output with an explicit state — never a silently
+// absent key.
 type Fact struct {
 	Name        string      `json:"name"`
 	Declaration Declaration `json:"declaration"`
@@ -68,6 +74,7 @@ type Fact struct {
 	Reason      string      `json:"reason,omitempty"`
 }
 
+// FactResponse is the response envelope: one fact per requested output.
 type FactResponse struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`

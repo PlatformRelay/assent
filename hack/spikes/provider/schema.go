@@ -31,7 +31,10 @@ func mustCompile(name string, data []byte) *jsonschema.Schema {
 	return c.MustCompile(name)
 }
 
-func ValidateRequest(raw []byte) error  { return validateAgainst(requestSchema, raw) }
+// ValidateRequest checks raw JSON against request.schema.json.
+func ValidateRequest(raw []byte) error { return validateAgainst(requestSchema, raw) }
+
+// ValidateResponse checks raw JSON against response.schema.json.
 func ValidateResponse(raw []byte) error { return validateAgainst(responseSchema, raw) }
 
 func validateAgainst(s *jsonschema.Schema, raw []byte) error {

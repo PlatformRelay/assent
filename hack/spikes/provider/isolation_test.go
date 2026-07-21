@@ -12,7 +12,7 @@ import (
 // name matches *TOKEN*/*SECRET* — the exec.Cmd environment is scrubbed, never
 // inherited.
 func TestIsolation(t *testing.T) {
-	const forgeToken = "assent-test-canary-not-a-forge-token"
+	const forgeToken = "assent-test-canary-not-a-forge-token" // #nosec G101 -- deliberate canary, not a real credential
 	t.Setenv("ASSENT_FORGE_TOKEN", forgeToken)
 	t.Setenv("CI_JOB_SECRET", "job-secret-canary")
 

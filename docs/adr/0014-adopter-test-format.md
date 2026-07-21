@@ -91,3 +91,12 @@ cases:
   in isolation rather than the envelope+aggregation pipeline, and is unwritable for the
   YAML-first audience. The harness may still *run* `opa test` additionally for rego/ modules.
 - *"Table-driven Go tests."* — Our internal tests, yes (D-010); adopters never write Go.
+
+## Amendment (2026-07-21, ADR-0016 / design roast P2-2): safety vs presentation assertions
+
+Policy tests assert **structured safety semantics**: decision, rule id, effect, paths,
+score arithmetic. `message~:` wording assertions are discouraged (a template/locale change
+must never break a safety test) and reserved for cases where the message *is* the behavior.
+Rendered-output expectations (`expect_comment.md` goldens) belong to the **template/theme
+test layer**, exercised via `assent render` against fixtures (ADR-0016 §4) — separate files,
+separate failure domain. `assent test --coverage` counts only safety assertions.

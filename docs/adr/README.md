@@ -23,3 +23,4 @@ and spikes in the planning workflow (see [`../planning/meta-plan.md`](../plannin
 | [0013](0013-assert-syntax-and-backend.md) | `assert` syntax and backend: CEL-leaf condition trees on cel-go ([gallery](0013-appendix-syntax-gallery.md)) | Proposed |
 | [0014](0014-adopter-test-format.md) | Adopter test format — policy tests as a public contract | Proposed |
 | [0015](0015-trust-boundaries-merge-integrity.md) | Trust boundaries and merge-time integrity (from the 2026-07-21 adversarial review) | Proposed |
+| [0016](0016-presentation-theming.md) | Presentation theming: config knobs, slots, CEL messages, render contract | Proposed |

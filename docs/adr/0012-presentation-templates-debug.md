@@ -114,3 +114,12 @@ the report artifact by default (report keeps a salted hash for replay comparison
 Renderer additionally scrubs known secret patterns. Providers must never return raw
 credentials as facts. Template scope includes `env` so packs can vary wording per
 environment honestly (nonprod findings should not claim production stakes).
+
+## Superseded in part (2026-07-21)
+
+The override mechanism of this ADR ("repo-level template overrides … Go `text/template`")
+is superseded by [ADR-0016](0016-presentation-theming.md): tiered customization (config
+knobs → slots → full templates, adoption-gated), CEL-based `{{ }}` interpolation, a
+renderer-owned envelope that user content cannot touch, and the PresentationModel as the
+pinned render contract. The default layout, finding-lifecycle state machine, and redaction
+rules in this ADR remain in force.

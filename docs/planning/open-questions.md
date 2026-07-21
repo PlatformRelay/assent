@@ -2,7 +2,7 @@
 
 | ID | Question | Blocks | Notes / leading answer |
 | --- | --- | --- | --- |
-| OQ-1 | ~~Project name~~ **Resolved: assent** (D-009). Residual: verify GitHub availability + `assent.dev` domain; confirm org before push | public repo creation | [naming.md](naming.md) |
+| OQ-1 | ~~Project name~~ **Resolved: assent** (D-009); repo live at PlatformRelay/assent (D-014). Residual: `assent.dev` domain unverified — decide apiVersion group before Phase 3 freeze | Phase 3 | [naming.md](naming.md) |
 | OQ-2 | Hosting: GitHub only, or GitLab mirror (dogfooding the GitLab adapter on our own repo)? | Phase 5 / E9 | dogfooding on GitLab is attractive once E4 exists |
 | OQ-3 | ~~Two parallel frontends?~~ Resolved by ADR-0002 v2: one YAML envelope, pluggable predicate backends | — | superseded; successor questions: OQ-11/OQ-12 |
 | OQ-4 | Ship gRPC (`go-plugin`) tier in v1, or is HTTP/exec enough alongside built-ins? | ADR-0004 accept | Spike C; leading: defer gRPC to v1.x |

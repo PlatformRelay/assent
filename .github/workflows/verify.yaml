@@ -23,10 +23,8 @@ jobs:
           version: latest
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-      - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: gitleaks # CLI directly — gitleaks-action requires a paid license for org repos
+        run: go run github.com/zricethezav/gitleaks/v8@latest detect --source . --no-banner --redact
       - run: go test -race ./...
       - name: coverage gate (>=90% on internal/, D-010)
         run: |

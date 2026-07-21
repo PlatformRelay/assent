@@ -7,7 +7,7 @@
 | OQ-3 | ~~Two parallel frontends?~~ Resolved by ADR-0002 v2: one YAML envelope, pluggable predicate backends | — | superseded; successor questions: OQ-11/OQ-12 |
 | OQ-4 | Ship gRPC (`go-plugin`) tier in v1, or is HTTP/exec enough alongside built-ins? | ADR-0004 accept | Spike C; leading: defer gRPC to v1.x |
 | OQ-5 | Policy discovery: `.assent/` only, or also remote packs (central policy repo, git-ref-pinned) in v1? | ADR-0010 accept | leading: local v1, remote packs designed-for (ADR-0010) |
-| OQ-6 | E2E default in CI: GitLab-in-kind vs GitLab CE testcontainer (boot time / RAM / flakiness)? | ADR-0006 accept | Spike B; kind stays for local/demo either way |
+| OQ-6 | E2E default in CI: GitLab-in-kind vs GitLab CE testcontainer (boot time / RAM / flakiness)? | ADR-0006 accept | **Leading answer: testcontainer in CI** ([Spike B](spikes/spike-b-e2e.md) — boot p50 96 s vs 126 s, ~2.4 GB vs ~3.1 GB+node, 0 flakes each); kind stays for local/demo |
 | OQ-7 | ~~GitHub mapping for `challenge`~~ **Leading answer (P1-E3 dossier): parity for the gate, not the device** — required-conversation-resolution carries the acknowledgement gate (author/write-resolvable, same as GitLab); `REQUEST_CHANGES` is reserved for block-severity since resolution doesn't clear it and dismissal is write-access-wide unless restricted | ADR-0005 accept | [forge-dossier-github.md](forge-dossier-github.md) §3; residual: E10-era live checks |
 | OQ-8 | Decision replay/audit: JSON report artifact enough, or signed/attested decision record later? | Phase 3 | v1: artifact (Pins in report); attestations later epic |
 | OQ-9 | Version pinning for reproducibility (tool digest + policy SHA in report `Pins`)? | Phase 3 | must be in the report schema from day 1 |

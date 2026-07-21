@@ -1,27 +1,27 @@
-# DRAFT — illustrative rule in the YAML envelope (ADR-0002 v2 / ADR-0010); same archetype
-# as ../rego/bounded_change.rego. `assert` syntax is decided by Spike A (OQ-12).
+# DRAFT — envelope rule (ADR-0010/0013): one predicate, both outcomes via onFail
+# (ADR-0007 amendment 2) — no negation-pair twin rules, and the quota-exceeded case
+# gets an explanation instead of a silent "uncovered change".
 apiVersion: assent.dev/v1alpha1
 kind: MergePolicy
 metadata:
   name: bounded-change-partitions
 spec:
   rules:
-    - name: partition-increase-within-quota
+    - name: partition-change-bounds
       match:
         changes:
           - path: "**/partitions"
             kind: modify
-      assert: "new >= old && new <= facts.quota.max_partitions"
-      effect: vouch          # predicate holds -> change is automerge-eligible (ADR-0007)
-      points: 1
+      assert:
+        all:
+          - cel: new >= old
+            message: "partitions may not decrease ({{ old }} -> {{ new }})"
+          - cel: new <= facts.quota.max_partitions
+            message: "partitions {{ new }} exceeds quota {{ facts.quota.max_partitions }}"
+      effect: vouch          # predicate true -> automerge-eligible
+      points: 1              # accrues PER FIRING: many bumps in one MR add up (bulk guard)
+      onFail:
+        effect: challenge    # predicate false -> the failing leaf's message explains why
       docs:
         url: https://example.com/policies/partitions
         summary: "Partition increases within quota are safe; decreases are not possible in Kafka."
-    - name: partition-decrease
-      match:
-        changes:
-          - path: "**/partitions"
-            kind: modify
-      assert: "new < old"    # predicate true -> effect applies
-      effect: block
-      message: "partitions may not decrease ({{ old }} -> {{ new }})"

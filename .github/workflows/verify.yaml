@@ -10,21 +10,19 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # gitleaks scans history
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: stable # go.mod stays the minimum; CI runs latest stable (govulncheck needs it)
       - run: go vet ./...
       - name: golangci-lint (incl. gosec)
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
+        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6
       - name: govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
       - name: gitleaks # CLI directly — gitleaks-action requires a paid license for org repos
-        run: go run github.com/zricethezav/gitleaks/v8@latest detect --source . --no-banner --redact
+        run: go run github.com/zricethezav/gitleaks/v8@v8.30.1 detect --source . --no-banner --redact
       - run: go test -race ./...
       - name: coverage gate (>=90% on internal/, D-010)
         run: |

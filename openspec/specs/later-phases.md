@@ -1,6 +1,9 @@
 # Later phases — epics only (stories authored in Phase 3, per meta-plan "contracts first")
 
-Statuses: **Planned** (unlocks with its phase) · **Locked (D-012)** (needs a named consumer).
+Statuses: **Planned** (unlocks with its phase) · **Locked (D-012)** (needs a named consumer)
+· **Unlocked (D-017)** (named consumer committed; contract in Phase 3, implementation
+sequenced after the Phase-4 adoption gate). See
+[named-consumer-compat.md](../../docs/planning/named-consumer-compat.md).
 
 ## Phase 3 — Contracts first
 
@@ -16,9 +19,19 @@ group settled (OQ-1 residual). **Exit gate (D-016)**: the strict end-to-end cont
 of §8 — pinned target/merge result, renamed entry with stable identity, two required
 obligations, an expired typed fact, a missing required approval, expected DecisionRecord +
 redacted PresentationModel + publication preconditions — validates against the same schemas
-as every example; no engine code before it exists. Story seeds: schema-per-contract slices;
-fixture authoring; schema-validation CI job; predicate-scope table freeze (ADR-0013);
-`assent lint` hard-error list spec (ADR-0010 amendment); OQ-8/9/10/13/21/22 resolutions.
+as every example; no engine code before it exists.
+D-017 additions: a **typed ApprovalEvidence contract** (resolves OQ-23; principal identity,
+approval source/rule, self-approval policy, eligibility evidence, source + merge-result
+pins, observation time + expiry, verifying forge capability — a discussion resolver is not
+approval evidence; missing capability → never auto-merge, no silent downgrade to
+challenge); **one sanitized named-consumer compatibility fixture** in the mandatory set
+(phase, profile, comparison delta, approval evidence, marker fields, budget reservation
+are structured fields, never inferred from messages/labels/rule names); EvaluationInput
+stays backend-neutral so the unlocked E11 contract is not precluded. Story seeds:
+schema-per-contract slices; fixture authoring; schema-validation CI job; predicate-scope
+table freeze (ADR-0013); `assent lint` hard-error list spec (ADR-0010 amendment);
+ApprovalEvidence slice; compatibility fixture; OQ-8/9/10/13/22 resolutions (OQ-21 moved to
+P3-E4, OQ-23 resolved here).
 
 ### P3-E2 — Versioning & compatibility spec — Planned
 Specify ADR-0017 §9 as testable rules: safety-bearing resources reject unknown
@@ -40,6 +53,55 @@ the archetype fixtures become the seed corpus for `assent test` goldens. Story s
 per-shape starter pack (topic-registry / service-catalog / infra-vars); rego example
 quarantined behind a `# locked: D-012` marker; docs updated.
 
+### P3-E4 — Policy lifecycle contracts: rollout phase, profiles, comparison — Planned
+D-017 (B2–B4): resolve OQ-21 **in favor of** an explicit rollout phase on rules/packs —
+`off` (parsed and linted, not evaluated), `observe` (evaluated and recorded, cannot alter
+the enforcing decision or forge state), `enforce` (contributes obligations, blocks,
+reviews, challenges, score); editing effects to simulate rollout loses policy identity and
+breaks before/after comparison. DecisionRecord carries observed and enforcing findings
+separately; phase transitions are visible in policy diffs. **Named policy profiles** with a
+single-writer rule: exactly one profile may authorize forge writes, counterfactual profiles
+are recorder-only; profiles must not become a second routing system — one precedence table
+defines profile × environment/class-binding interaction. A **semantic comparison record**
+with a closed delta taxonomy (stricter-intervention-added, destructive-or-authorization-
+intervention-missed, subject-or-obligation-uncovered, newly-auto-mergeable,
+score-threshold-change, explanation-only) and a versioned **PolicyComparisonSuite**: an
+immutable corpus of ReplayBundles with stable case IDs plus machine-enforceable promotion
+gates (zero missed destructive interventions, zero missed authorization/ownership
+interventions, no unexpected obligation removal, bounded auto-merge widening, explicitly
+accepted deltas). Rendered-message changes never enter semantic gates (ADR-0014 amendment
+split). Authored as **ADR-0018**, accepted at the Phase-3 freeze review. **Exit gate**:
+schemas represent phase, profile, comparison record, and suite; the named-consumer
+compatibility fixture exercises observe-vs-enforce and one refused auto-merge-widening
+delta. Story seeds: phase field + lint; profile precedence table; delta taxonomy;
+comparison-suite format; `assent compare` CLI spec (implementation Phase 5+, E6).
+
+### P3-E5 — Publication reconciliation protocol (database-free) — Planned
+D-017 (B6): freeze the marker + reconciliation protocol in the publication contract as
+**ADR-0019**, preserving D-007 (no database — the forge is the durable reconciliation
+surface). Hidden-HTML marker with four distinct concepts: `slot` (stable identity of the
+logical artifact from canonical fields — project/MR, rule ID, obligation, EntryRef, effect,
+anchor), `occurrence` (hash of the safety-relevant occurrence so changed content cannot
+inherit a previously resolved challenge), `decision` (DecisionRecord hash that requested
+the state), `artifact` kind + schema version. Markers are correlation metadata only —
+never decision input or authorization evidence; only bot-authored comments are parsed
+(contributor marker spoofing ignored); markers carry no secrets, fact values,
+user-controlled Markdown, or raw policy expressions. Reconciliation semantics frozen as a
+numbered contract: recompute DesiredReviewState from trusted inputs, list paginated
+bot-authored artifacts, update the one summary slot in place, leave the same unresolved
+occurrence untouched, preserve resolution of the same occurrence across reruns, supersede
+stale occurrences with fresh challenges, resolve no-longer-desired findings,
+deterministically repair pre-existing duplicates (lowest forge ID canonical, repair
+recorded in PublicationReceipt), rescan after publication before reporting success. Strict
+duplicate prevention requires **one publisher per MR**: per-MR `resource_group` in the CI
+template (serve mode: keyed per-MR lock); multi-replica HA is explicitly unsupported —
+duplicates then only converge on the next reconciliation — and `doctor` reports which
+guarantee the deployment provides. **Exit gate**: marker grammar and reconciliation state
+table exist as schema + fixtures; P4-E1's exit gate consumes them (rerun idempotence).
+Story seeds: marker grammar schema; reconciliation state table + fixtures; serialization
+requirement folded into the setup walkthrough and doctor checklist; duplicate-repair
+fixture.
+
 ## Phase 4 — Walking skeleton
 
 ### P4-E1 — Walking skeleton with trust boundaries from day one — Planned
@@ -51,8 +113,10 @@ policy loaded from target ref only, `.assent/**` MR → `assent-policy` meta-cla
 golden, SHA-guard rejection on target/source movement (merge-result precondition, ADR-0017
 §1), protected-pipeline `doctor` precondition check refusing to arm auto-merge, provider-less
 run (no token near evaluation). **Exit gate**: the L3 skeleton e2e green + replayable;
-determinism double-run gate active in CI; **adoption gate (D-012): one real repository has
-run assent on live MRs** — a synthetic fixture does not count. Story seeds: CLI+CI env
+determinism double-run gate active in CI; **rerun idempotence (D-017/P3-E5): a rerun and a
+crash-then-rerun produce zero duplicate comments/threads under the serialized topology, and
+seeded pre-existing duplicates are repaired deterministically**; **adoption gate (D-012):
+one real repository has run assent on live MRs** — a synthetic fixture does not count. Story seeds: CLI+CI env
 adapter; minimal differ (modify only); minimal obligations aggregation; minimal Reconcile
 (thread, approve, pinned merge); report artifact; doctor preconditions; e2e harness reuse
 from Spike B.
@@ -78,8 +142,11 @@ tri-state predicates fail safe; per-firing points against per-binding thresholds
 outcome contributions, `score` is not an effect); one-shot arming restrictions for expiring
 facts (§4); deterministic order-independent aggregation into DecisionRecord. **Exit gate**:
 golden decision tests for every archetype expected-decision pair; determinism double-run;
-"broad rule cannot satisfy an obligation it does not name" adversarial golden. Seeds:
-obligation registry; aggregation; points; arming logic; DecisionRecord emission.
+"broad rule cannot satisfy an obligation it does not name" adversarial golden; **observe
+cannot alter enforce** golden (a rule flipped to `observe` changes recorded findings but
+never the enforcing outcome or forge state, per P3-E4). Seeds: obligation registry;
+aggregation; points; arming logic; phase-aware aggregation (observed vs enforcing
+findings); DecisionRecord emission.
 
 ### E3 — Policy surface: envelope loader, CEL assert backend, lint — Planned
 MergePolicy/RulesetBinding/Config loading with strict decode (P3-E2 rules), target-ref-only
@@ -89,7 +156,11 @@ shared with `{{ }}` message interpolation, load-time compile errors (ADR-0016 §
 `assent lint` hard errors (obligation coverage, reserved classes, fail-open restrictions,
 tests-per-rule, unkeyed lists, undeclared projections). **Exit gate**: lint catches every
 hard-error fixture; all archetype packs load and evaluate to their expected decisions.
-Seeds: loader; CEL backend; tree walker + trace; interpolation; lint.
+D-017 (B10) adds a **generated rule catalogue** from loaded packs (stable rule/obligation
+IDs, docs links, rollout phase, required facts/capabilities, classes + matcher domains,
+possible finding codes/effects, deprecation metadata) — an additive-tolerant report, the
+single source for generated docs and lint; no second handwritten registry. Seeds: loader;
+CEL backend; tree walker + trace; interpolation; lint; catalogue generation.
 
 ### E4 — GitLab forge adapter: Snapshot/Resolve/Reconcile — Planned
 The `Snapshot → Resolve → Reconcile(DesiredReviewState, Preconditions) → PublicationReceipt`
@@ -99,7 +170,10 @@ upsert), approve/merge with source+target SHA and merge-result preconditions fai
 capability flags per tier (gap → never auto-merge), `doctor` typed capability/precondition
 report (ADR-0017 §9). **Exit gate**: L2 cassette contract tests + the L3 conformance cases
 "target advanced after evaluation → rejected/re-evaluated" and "MR edits own policy →
-BLOCK". Seeds: snapshot; thread reconcile; approval evidence; pinned merge; doctor.
+BLOCK", plus the P3-E5 reconciliation conformance cases (rerun idempotence,
+occurrence-supersession, deterministic duplicate repair, spoofed contributor marker
+ignored). Seeds: snapshot; marker-keyed thread reconcile (ADR-0019); approval evidence
+(P3-E1 ApprovalEvidence contract); pinned merge; doctor.
 
 ### E5 — Provider host + builtins — Planned
 Typed provider protocol from Spike C frozen in P3-E1: builtin providers (forge groups,
@@ -116,8 +190,13 @@ stubbed: directory cases + inline `cases.yaml`, `--update` golden flow, `--cover
 per-rule both-polarity requirement, obligation/finding-code assertions with `exact` safety
 default, determinism double-run per case; dogfooded on `examples/` (packs gate themselves in
 CI). **Exit gate**: every shipped example pack green under `assent test`; a deliberately
-broken pack fails with the expected/actual diff UX. Seeds: runner; expect matcher; update
-flow; coverage lint; examples CI job.
+broken pack fails with the expected/actual diff UX. D-017 (B3/B4) adds the
+**PolicyComparisonSuite runner**: `assent compare` evaluates baseline vs candidate profiles
+over an immutable ReplayBundle corpus, classifies deltas per the P3-E4 taxonomy, and
+enforces the promotion gates (missed destructive/authorization intervention → hard fail;
+unaccepted widening → fail; explanation-only → pass); comparison runs are side-effect-free.
+Seeds: runner; expect matcher; update flow; coverage lint; examples CI job; comparison
+runner + promotion-gate evaluation.
 
 ### E7 — E2E & conformance infra — Planned (starts alongside E1)
 The Spike-B-chosen CI profile productionized + kind for local/demo; sample-repo generator
@@ -151,18 +230,61 @@ Unlocks with a named consumer. Seam kept honest by the P1-E3-S03 dossier (REQUES
 conversation-resolution parity, merge queue as merge-result pin, base-ref workflow trust)
 and by the conformance suite being forge-neutral (E7). No frozen contract until unlock.
 
-### E11 — Rego predicate backend — **Locked (D-012)**
-Tier-2 escape hatch inside the same envelope (ADR-0002 v2): violations-shaped modules,
-explicit obligation-proof polarity (no implicit "no violation = proof"), OPA capability
-sandbox (D-013). Unlocks with a named consumer whose rules exceed the CEL tier-1 ceiling.
+### E11 — Complex-rule backend (Rego) — **Unlocked (D-017), implementation after Phase 4**
+The named consumer's multi-pass / cross-manifest / set-difference / graph-relationship
+checks are the consumer D-012 required. Contract committed in Phase 3 (EvaluationInput
+stays backend-neutral, P3-E1); implementation only in the named-consumer expansion, and
+evidence-based per rule: each ported rule tries CEL first, the backend is built when a
+concrete rule demonstrably exceeds the tier-1 ceiling. Shape unchanged: tier-2 escape hatch
+inside the same envelope (ADR-0002 v2), violations-shaped modules, explicit
+obligation-proof polarity (no implicit "no violation = proof"), OPA capability sandbox
+(D-013), same typed EvaluationInput, structured proof/finding output, declared data, no
+I/O, no control over aggregation. Hard boundary: no domain-aware joins and no Go rule
+plugins in `internal/core`.
 
-### E12 — `serve` webhook mode — **Locked (D-012)**
-v1.x wrapper around the identical pipeline; security requirements already fixed (ADR-0015
-§6: HMAC verification, event dedup key, idempotent publishing, per-repo tokens, target-ref
-policy loading) plus the ADR-0017 §4 justification: the reconciler that can revoke armed
-merges when expiring facts control them. Unlocks with a named consumer; also gates OQ-19/20.
+### E12 — Service tier: `serve`, sweep, merge budgets, post-merge audit — **Unlocked (D-017), implementation after Phase 4**
+Rescoped from "`serve` webhook mode" to the operational tier the named consumer needs;
+seams designed now, implemented only after the D-012 adoption gate and a representative
+rule port. Contents: (a) **serve** — v1.x wrapper around the identical pipeline; security
+requirements already fixed (ADR-0015 §6: HMAC verification, event dedup key, idempotent
+publishing, per-repo tokens, target-ref policy loading) plus the ADR-0017 §4 reconciler
+that revokes armed merges when expiring facts control them; keyed per-MR lock (P3-E5).
+(b) **Merge budgets** (OQ resolved as execution policy, not score): per-run caps with
+deterministic candidate ordering need no store; exact cross-run/window budgets are
+supported only under one serialized sweep; forge-artifact ledgers may be adopted only with
+proven atomicity; fail closed when the coordination guarantee is unavailable; audit event
+per reservation and merge; `doctor` reports the provided guarantee. (c) **Batch sweep**
+(OQ-20): evaluate many candidates, but every write goes through the same per-MR
+preconditions, reconciliation, budgets, and audit records — no bulk bypass; first
+implementation is one serialized sweep process, horizontal workers unsupported until a
+lease mechanism exists. (d) **Post-merge audit** (OQ-19): correlate merged commits to
+their DecisionRecord + PublicationReceipt, detect revert/rollback/operator-marked bad
+outcomes, emit a durable safety event, optionally open a revert MR via a separately
+authorized capability (never a direct revert push), and feed adjudicated outcomes into
+policy comparison without treating every human revert as proof the decision was wrong.
 
 ### E13 — Remote policy packs — **Locked (D-012)**
 `git::` pack sources pinned by commit SHA (tags are mutable), checksum/signature verified,
 same target-ref/no-self-modification trust rules as local policy (ADR-0010 amendment,
 ADR-0015 §1). Unlocks with a named consumer running a central policy repo (OQ-5).
+
+### E14 — Kubernetes CRD/CR validation adapter — **Planned, gated on Spike D + ADR-0020**
+Optional adapter **outside the generic decision core** (D-017 B11), committed only if the
+[P2-E6 Spike D](p2-e6-spike-crd/spec.md) feasibility verdict supports it. Scope per the
+spike-informed ADR-0020: multi-document YAML with preserved boundaries/positions; GVK
+classification; stable subjects from GVK + namespace + name; CRD schemas loaded from the
+trusted target ref, a checked-in pinned bundle, or a typed provider result with content
+digest; CR instances validated against the matching CRD version's structural OpenAPI v3
+schema with Kubernetes semantics (not a generic JSON Schema validator), including
+`x-kubernetes-validations` CEL with old/new transition rules where the prior resource
+exists; fail closed to REVIEW on missing schema, unsupported conversion/defaulting,
+invalid CRD structure, or capability gaps; structured findings with GVK, EntryRef, schema
+path, instance path, source span; schema + validator digests in
+DecisionRecord/ReplayBundle. Trust rule is non-negotiable: gating validation uses the
+**target-ref** schema — a branch-modified CRD may be compiled for observe-mode comparison
+but cannot relax the schema judging its own MR; new CRD + first instances with no trusted
+schema → human review; CRD definition changes are `require-review` by default. Explicitly
+out: admission webhooks, mutating admission, live cluster state (optional trusted provider
+territory, e.g. a pinned server-side dry-run fact); Helm/Kustomize source is consumed only
+as rendered manifests or via a separately declared pinned render provider. **Exit gate**:
+conformance fixtures pass (per Spike D corpus), not merely accepting CRD-shaped YAML.

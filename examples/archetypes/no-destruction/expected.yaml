@@ -1,0 +1,20 @@
+# DRAFT — pre-schema
+# Index for the no-destruction archetype (ADR-0003: rename never laxer than delete).
+# All cases below expect REVIEW or BLOCK — never APPROVE.
+cases:
+  - path: delete/
+    decision: BLOCK
+    event: fileEvents.deleted topics/prod/payments.transactions.v1.yaml
+  - path: rename/
+    decision: REVIEW
+    event: fileEvents.renamed payments.transactions.v1.yaml -> billing.transactions.v1.yaml
+  - path: near-similarity/
+    decision: BLOCK
+    event: >
+      adversarial near-similarity delete+add (payments.transactions.v1 deleted,
+      payments.settled.v1 added with near-identical body). Must not downgrade
+      below delete strictness even if fold-to-rename would fire.
+obligation: non-destructive
+onFailure:
+  effect: require-review  # or block per pack; never challenge-as-authorization
+  code: destruction.forbidden

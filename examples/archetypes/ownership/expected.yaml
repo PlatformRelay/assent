@@ -1,0 +1,9 @@
+# DRAFT — pre-schema
+decision: APPROVE
+firing:
+  - rule_intent: ownership / author-owns-entry
+    obligation: ownership
+    outcome: satisfied
+notes: >
+  Author alice is in orders-team; partitions bump on orders.events.v1 is within
+  other obligations' bands in the full pack (shown here for ownership alone).

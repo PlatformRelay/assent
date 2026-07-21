@@ -1,0 +1,10 @@
+# DRAFT — pre-schema
+decision: BLOCK
+firing:
+  - rule_intent: schema-validity / catalog-v1
+    obligation: schema-valid
+    outcome: failed
+    onFailure:
+      effect: block
+      code: schema.invalid
+    detail: "orders-api missing required property owner"

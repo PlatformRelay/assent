@@ -1,0 +1,8 @@
+# DRAFT — pre-schema
+author:
+  login: alice
+  groups: [orders-team]
+allow_list:
+  - /partitions
+  - /retention_hours
+  - /description

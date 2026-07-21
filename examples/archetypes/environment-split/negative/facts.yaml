@@ -1,0 +1,7 @@
+# DRAFT — pre-schema
+author:
+  login: alice
+  groups: [orders-team]
+env: prod
+quota:
+  max_partitions: 16   # strict prod band

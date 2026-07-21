@@ -1,0 +1,10 @@
+# DRAFT — pre-schema
+decision: REVIEW
+firing:
+  - rule_intent: bounded-change / partition-change-bounds
+    obligation: bounded-change
+    outcome: failed
+    onFailure:
+      effect: challenge
+      code: bounded-change.out-of-band
+    detail: "partitions 12 -> 48 exceeds quota 24"

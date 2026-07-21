@@ -1,0 +1,12 @@
+name: payments.settled.v1
+owner: payments-team
+partitions: 24
+replication_factor: 3
+retention_hours: 720
+cleanup_policy: delete
+schema:
+  format: avro
+  subject: payments.settled.v1-value
+description: >
+  Settled payment txs. Long retention because the reconciliation batch
+  replays up to 30 days.

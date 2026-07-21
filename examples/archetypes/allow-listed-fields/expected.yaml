@@ -1,0 +1,7 @@
+# DRAFT — pre-schema
+decision: APPROVE
+firing:
+  - rule_intent: allow-listed-fields / only-safe-fields
+    obligation: allowed-fields
+    outcome: satisfied
+    detail: "only /partitions changed"

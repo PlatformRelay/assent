@@ -1,0 +1,13 @@
+# DRAFT — pre-schema
+decision: BLOCK
+firing:
+  - rule_intent: assent-policy / meta-class
+    obligation: policy-integrity
+    outcome: failed
+    onFailure:
+      effect: block
+      code: assent-policy.changed
+    detail: ".assent/packs/ownership.yaml modified on source branch"
+notes: >
+  Gating loads policy from target ref (ADR-0015 §1). Source-branch weakening to
+  challenge cannot vouch this MR. Golden: MR edits its own policy → BLOCK.

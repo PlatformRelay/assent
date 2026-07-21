@@ -1,0 +1,13 @@
+# Trusted target-ref policy (simplified excerpt for the archetype fixture).
+apiVersion: assent.dev/v1alpha1
+kind: MergePolicy
+metadata:
+  name: ownership
+spec:
+  rules:
+    - name: author-owns-entry
+      assert: "entry.owner in facts.author.groups"
+      prove: { obligation: ownership }
+      onFailure:
+        effect: require-review
+        code: ownership.unauthorized

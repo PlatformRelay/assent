@@ -1,0 +1,7 @@
+# DRAFT — pre-schema
+decision: APPROVE
+firing:
+  - rule_intent: bounded-change / partition-change-bounds
+    obligation: bounded-change
+    outcome: satisfied
+    detail: "partitions 12 -> 16 (<= quota 24, non-decreasing)"

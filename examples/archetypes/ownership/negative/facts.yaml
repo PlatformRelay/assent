@@ -1,0 +1,6 @@
+# DRAFT — pre-schema
+author:
+  login: bob
+  groups: [payments-team]
+quota:
+  max_partitions: 24

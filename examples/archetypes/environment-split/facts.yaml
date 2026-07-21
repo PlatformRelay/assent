@@ -1,0 +1,7 @@
+# DRAFT — pre-schema
+author:
+  login: alice
+  groups: [orders-team]
+env: dev
+quota:
+  max_partitions: 48   # loose dev band

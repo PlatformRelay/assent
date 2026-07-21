@@ -1,0 +1,7 @@
+# DRAFT — pre-schema
+author:
+  login: alice
+  groups: [orders-team]
+classifier:
+  meta_class: assent-policy
+policy_load: target-ref

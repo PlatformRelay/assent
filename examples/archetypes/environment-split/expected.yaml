@@ -1,0 +1,8 @@
+# DRAFT — pre-schema
+decision: APPROVE
+firing:
+  - rule_intent: environment-split / dev-bounded-partitions
+    obligation: bounded-change
+    outcome: satisfied
+    detail: "dev env: partitions 3 -> 6 (<= 48)"
+binding: env=dev pack

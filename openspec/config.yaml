@@ -3,22 +3,28 @@ schema: spec-driven
 
 context: |
   Project: assent (name decided 2026-07-21, D-009) — open-source, deterministic,
-  policy-driven auto-merge gate for self-service config repos. MIT licensed.
-  Runs as a one-shot CLI in CI (GitLab CI first, GitHub Actions later); no long-lived service in v1.
-  Core is pure/hexagonal: PolicyInput (canonical ChangeSet + facts + MR metadata) -> Decision + Findings
-  (APPROVE | REVIEW | BLOCK). Determinism is a hard NFR: same input, same decision — enforced by a
-  golden double-run gate. No LLM in the decision path.
-  Policy frontends: Rego (OPA, embedded) + Kyverno-style declarative YAML — both over one engine (ADR-0002).
-  Change model: format adapters (JSON, YAML, HCL/tfvars) -> value tree -> structural diff (ADR-0003);
-  unparseable input becomes an explicit opaque-change -> fail-safe to human review.
-  Providers (permissions/facts): tiered — built-ins (forge groups, OIDC/Keycloak, LDAP, owners-file),
-  HTTP/exec, gRPC go-plugin, WASM future (ADR-0004). Policies never do I/O; providers produce facts.
-  Forge port: behaviour-specified, GitLab adapter first, GitHub second; conformance suite defines the
-  port (ADR-0005). E2E against real GitLab in kind or testcontainer (ADR-0006, OQ-6).
-  Sanitization: fully open source — no employer names, internal system names, or internal policy
-  content in any committed artifact (D-002). Sample repos are generated, generic equivalents.
+  policy-driven auto-merge gate for self-service config repos. Apache-2.0 (D-002).
+  Runs as a one-shot CLI in CI (GitLab first, GitHub later); serve/webhook mode v1.x.
+  Core is pure/hexagonal: PolicyInput (canonical ChangeSet + facts + MR metadata) -> Decision +
+  Findings (APPROVE | REVIEW | BLOCK). Determinism is a hard NFR (golden double-run gate). No LLM.
+  Policy surface (ADR-0002 v2 + ADR-0013): ONE Kyverno-style YAML envelope (MergePolicy /
+  RulesetBinding); rule predicates are `assert` (all/any/not trees with CEL leaves on cel-go,
+  string shorthand) with `rego` as tier-2 escape hatch; envelope owns match/route/effect/points/
+  onFail; predicates never do I/O. Effects: comment | challenge | block | vouch | score with
+  default-deny vouch-coverage aggregation, tri-state predicates, per-firing points (ADR-0007).
+  Trust boundaries (ADR-0015): policy/config/templates load from the TARGET ref only;
+  `.assent/**` MRs route to block-by-default meta-class; SHA-guarded approve/merge; fact
+  freshness max_age; providers never hold the write token; protected-pipeline prerequisite.
+  Change model: JSON/YAML/HCL adapters -> value tree -> structural diff with positions,
+  first-class deletes/renames (fold opt-in), input resource limits, opaque -> REVIEW (ADR-0003).
+  Providers: builtin | HTTP | exec | gRPC | WASM tiers behind one Provider port; content-keyed
+  FactQuery with extractors; fail-open forbidden for vouch-feeding facts (ADR-0004/0011).
+  Testing (D-010): TDD; >=90% coverage on internal/ from first PR; golden + integration +
+  real-GitLab e2e; adopter test fixture format is a frozen public contract (ADR-0014).
+  Sanitization: fully open source — no employer names, internal system names, or internal
+  policy content in any committed artifact (D-002). Sample repos are generated equivalents.
   Commits: :gitmoji: type(scope): summary — ASCII shortcode only. No AI co-author trailers (D-004).
-  Implementation: TDD mandatory; one logical change per commit; specs before code (D-005).
+  Specs before code; one logical change per commit (D-005). See GUIDELINES.md for invariants.
 
 rules:
   proposal:
@@ -30,10 +36,11 @@ rules:
     - Map requirements to epic ID (E1..E9, meta-plan Phase 5) and story ID (E1-S01).
     - Assign stable REQ IDs (REQ-E1-S01-01) with "Test:" (artifact path) and "Verify:" (command).
     - Tag Level: L0|L1|L2|L3 per ADR-0006. One test artifact per REQ — no exceptions.
+    - Security-relevant REQs include the adversarial case (ADR-0015 invariants).
   design:
     - Prefer mermaid diagrams; reference docs/architecture/ and internal package sketch.
-    - Public contracts (PolicyInput, Decision/Findings, Provider, Forge port) change only via
-      a spec change proposal — never silently.
+    - Public contracts (PolicyInput, Decision/Findings, Provider, Forge port, test fixture
+      format) change only via a spec change proposal — never silently.
   tasks:
     - Vertical slices; each task independently verifiable.
     - Include gate command(s) that must pass before merge (task check at minimum).

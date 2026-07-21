@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/provider/v1alpha1/request.schema.json",
+  "title": "FactQuery",
+  "description": "Versioned request envelope sent by the assent provider host to a fact provider (HTTP body or exec stdin). Carries ONLY declared projections — never full old/new content without an explicit trusted capability, never credentials.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "queryId", "asOf", "subject", "outputs", "projections"],
+  "properties": {
+    "apiVersion": { "const": "provider.assent.dev/v1alpha1" },
+    "kind": { "const": "FactQuery" },
+    "queryId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Host-generated correlation id; the response must echo it."
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Host-pinned evaluation instant (RFC 3339). Providers derive observedAt/expiresAt from it; keeps the decision path free of provider wall clocks."
+    },
+    "subject": { "$ref": "#/$defs/subject" },
+    "outputs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Names of the declared outputs the host is requesting; must be a subset of the provider's declaration."
+    },
+    "projections": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The only change content a provider may see: the projections its declaration requested, intersected with what the change actually touched.",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pointer"],
+            "properties": {
+              "pointer": {
+                "type": "string",
+                "pattern": "^(/[^/]*)+$",
+                "description": "RFC 6901 JSON Pointer into the governed entry."
+              },
+              "old": { "description": "Value at the pointer on the target ref (absent when the pointer was added)." },
+              "new": { "description": "Value at the pointer on the merge result (absent when the pointer was removed)." }
+            }
+          }
+        }
+      }
+    },
+    "deadlineMs": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Soft deadline hint; the host enforces its own hard timeout regardless."
+    }
+  },
+  "$defs": {
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["user", "group", "entry", "repo"] },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

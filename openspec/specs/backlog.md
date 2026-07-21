@@ -29,7 +29,7 @@ change + expected decision written down (P1-E2-S02).
 | P2-E3 | Spike C — typed HTTP/exec provider contract + token isolation | [spec](p2-e3-spike-provider/spec.md) | Ready | no | ADR-0004/0017 §6 acceptance evidence |
 | P2-E4 | Secure-setup adoption spike (OQ-24) | [spec](p2-e4-spike-secure-setup/spec.md) | Blocked on P1-E3-S01/S02 | yes (timed clean-room run, real repo) | north-star wording; Phase-4 prerequisite |
 | P2-E5 | ADR acceptance round (0002–0017 → Accepted/Superseded) | [spec](p2-e5-adr-acceptance/spec.md) | Blocked on all P2 spikes (P2-E6 excluded) + P1-E3/E4 | yes (operator review) | **the Phase-2 gate** |
-| P2-E6 | Spike D — Kubernetes CRD/CR validation feasibility (D-017 B11) | [spec](p2-e6-spike-crd/spec.md) | Ready (parallel; does **not** gate P2-E5) | no | feeds ADR-0020 + the E14 go/no-go |
+| P2-E6 | Spike D — Kubernetes CRD/CR validation feasibility (D-017 B11) | [spec](p2-e6-spike-crd/spec.md) | Deferred to the Phase-3 window (D-018 — not first-wave); does **not** gate P2-E5 | no | feeds ADR-0020 + the E14 go/no-go |
 
 **Phase-2 gate**: every Proposed ADR moved to Accepted or Superseded, each with matrix +
 spike evidence (P2-E5-S02).

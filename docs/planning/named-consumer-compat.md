@@ -1,13 +1,17 @@
 # Named-consumer compatibility review (D-017)
 
-A behavioral-compatibility assessment was run between assent's committed design and the
-project's predecessor — a private, production Kafka self-service merge gate. The question:
-can assent's architecture reproduce the predecessor's complete observable safety behavior?
+A behavioral-compatibility assessment was run between assent's committed design and a
+private, production Kafka self-service merge gate that serves as the project's **reference
+use case**. Assent is not affiliated with that platform or its operator organization; it is
+an independent open-source project that generalizes the same class of use cases — the
+reference system was purpose-built for one very complex self-service repository, assent is
+the generic answer to that problem shape. The question assessed: can assent's architecture
+reproduce the reference system's complete observable safety behavior?
 The answer: **yes eventually; no under the committed v1 scope** — the gap is operational
 contracts and policy lifecycle, not rule expressiveness. This document records the critical
 reflection on the proposed changes and where each one lands in the backlog.
 
-The predecessor is hereby treated as **the first named consumer** in the sense of D-012.
+The reference use case is hereby treated as **the first named consumer** in the sense of D-012.
 That is exactly what D-012 was designed for: deferred seams unlock when a real consumer
 commits, and this consumer is real, demanding, and operated by the project owner.
 
@@ -31,7 +35,7 @@ generic core as packs/providers.
 | B8 | Post-merge audit + remediation (OQ-19) | **Seam now, implement later** — correlation pins already exist in the record model | E12 | post-Phase-4 |
 | B9 | Batch/sweep orchestration (OQ-20) | **Seam now, implement later**; no bulk bypass of per-MR preconditions, ever | E12 | post-Phase-4 |
 | B10 | Generated machine-readable rule catalogue | **Accept** — cheap, additive-tolerant report; not a safety schema | E3 seed (generation) + E9 (docs) | Phase 5 |
-| B11 | Kubernetes CRD/CR validation adapter | **Spike first, then decide** — the report itself concedes the dependency risk | new [P2-E6 Spike D](../../openspec/specs/p2-e6-spike-crd/spec.md) → ADR-0020 → E14 (Planned, gated) | spike: Phase 2/3 window · adapter: post-skeleton |
+| B11 | Kubernetes CRD/CR validation adapter | **Spike first, then decide** — the report itself concedes the dependency risk | new [P2-E6 Spike D](../../openspec/specs/p2-e6-spike-crd/spec.md) → ADR-0020 → E14 (Planned, gated) | spike: Phase-3 window (D-018 — not first-wave) · adapter: post-skeleton |
 
 ## Where the report over-reaches (declined or softened)
 
@@ -56,10 +60,10 @@ generic core as packs/providers.
    dependency bet (k8s libs vs small static binary) or a high-risk reimplementation. Spike D
    measures both before any contract commitment; the Phase-3 CRD fixture is added only if
    the spike verdict supports it.
-5. **Ratified declines from the report**: no loading of predecessor Go rules, no in-process
+5. **Ratified declines from the report**: no loading of the reference system's Go rules, no in-process
    plugin API, no command/flag/wording parity, no org- or Kafka-specific knowledge in core,
    no private policy content in this repository (D-002 sanitization applies to every
-   fixture derived from the predecessor).
+   fixture derived from the reference system).
 
 ## What stays locked
 

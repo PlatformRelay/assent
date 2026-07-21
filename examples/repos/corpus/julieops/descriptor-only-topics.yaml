@@ -1,0 +1,16 @@
+---
+context: "oltp"
+projects:
+  - name: "foo"
+    consumers:
+      - principal: "User:NewApp2"
+    topics:
+      - name: "foo"
+      - dataType: "avro"
+        name: "bar"
+      - dataType: "json"
+        name: "zet"
+  - name: "bar"
+    topics:
+      - dataType: "avro"
+        name: "bar"

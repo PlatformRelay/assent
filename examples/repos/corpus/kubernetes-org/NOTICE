@@ -1,0 +1,13 @@
+Vendored excerpt for fixture/demo use (P1-E1-S02, OQ-16).
+
+Source repo: https://github.com/kubernetes/org
+Pinned commit: 8c064d2064181a40fd59c41220f60e2e358b3dd7
+License: Apache-2.0 (see the source repository's LICENSE)
+Copyright: The Kubernetes Authors
+
+Files (original paths at the pinned commit):
+- kubernetes-nightly-org.yaml  <- config/kubernetes-nightly/org.yaml
+- etcd-io-org.yaml             <- config/etcd-io/org.yaml
+- config-restrictions.yaml     <- config/restrictions.yaml
+
+Files are unmodified; only renamed to flatten the directory structure.

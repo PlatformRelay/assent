@@ -1,0 +1,13 @@
+Vendored excerpt for fixture/demo use (P1-E1-S02, OQ-16).
+
+Source repo: https://github.com/kafka-ops/julie
+Pinned commit: e75d005e994d237642cdb566ebc6ff943d02762b
+License: MIT (see the source repository's LICENSE)
+Copyright: the JulieOps authors
+
+Files (original paths at the pinned commit):
+- descriptor.yaml             <- example/descriptor.yaml
+- descriptor-only-topics.yaml <- example/descriptor-only-topics.yaml
+- plans.yaml                  <- example/plans.yaml
+
+Files are unmodified.

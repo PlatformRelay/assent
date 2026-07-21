@@ -1,0 +1,92 @@
+---
+context: "context"
+company: "company"
+env: "env"
+source: "source"
+projects:
+  - name: "projectA"
+    consumers:
+      - principal: "User:App0"
+      - principal: "User:App1"
+    producers:
+      - principal: "User:App3"
+      - principal: "User:App4"
+    streams:
+      - principal: "User:Streams0"
+        topics:
+          read:
+            - "topicA"
+            - "topicB"
+          write:
+            - "topicC"
+            - "topicD"
+    ksql:
+      artefacts:
+        streams:
+          - path: "ksql/riderlocations.sql"
+            name: "riderLocations"
+        tables:
+          - path: "ksql/users.sql"
+            name: "users"
+    connectors:
+      - principal: "User:Connect1"
+        group: "group"
+        status_topic: "status"
+        offset_topic: "offset"
+        configs_topic: "configs"
+        topics:
+          read:
+            - "topicA"
+            - "topicB"
+      - principal: "User:Connect2"
+        topics:
+          write:
+            - "topicC"
+            - "topicD"
+    topics:
+      - name: "foo"
+        config:
+          replication.factor: "1"
+          num.partitions: "1"
+      - name: "bar"
+        dataType: "avro"
+        config:
+          replication.factor: "1"
+          num.partitions: "1"
+  - name: "projectB"
+    topics:
+      - dataType: "avro"
+        name: "bar"
+        config:
+          replication.factor: "1"
+          num.partitions: "1"
+  - name: "projectC"
+    streams:
+      - principal: "User:App0"
+        applicationId: "streamsApplicationId"
+        topics:
+          read:
+            - "topicE"
+          write:
+            - "topicF"
+    topics:
+      - name: "topicE"
+        config:
+          replication.factor: "1"
+          num.partitions: "1"
+      - name: "topicF"
+        config:
+          replication.factor: "1"
+          num.partitions: "1"
+platform:
+  schema_registry:
+    instances:
+      - principal: "User:SchemaRegistry01"
+        topic: "foo"
+        group: "bar"
+      - principal: "User:SchemaRegistry02"
+        topic: "zet"
+  control_center:
+    instances:
+      - principal: "User:ControlCenter"
+        appId: "controlcenter"

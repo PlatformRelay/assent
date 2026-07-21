@@ -1,0 +1,13 @@
+Vendored excerpt for fixture/demo use (P1-E1-S02, OQ-16).
+
+Source repo: https://github.com/octodns/octodns
+Pinned commit: 6ad5c2529c4633ed52a3100aba056f5e0fad0ea5
+License: MIT (see the source repository's LICENSE)
+Copyright: the octoDNS authors
+
+Files (original paths at the pinned commit):
+- unit.tests.yaml     <- tests/config/unit.tests.yaml   (zone data: DNS records)
+- simple.yaml         <- tests/config/simple.yaml       (top-level provider/zone config)
+- zone-threshold.yaml <- tests/config/zone-threshold.yaml (per-zone safety thresholds)
+
+Files are unmodified.

@@ -66,6 +66,7 @@ APPROVE        131   61%        bounded-change/partition-increase (88)
 REVIEW          71   33%        retention-shrink-challenge (24), uncovered-change (31)
 BLOCK           12    6%        no-topic-deletion (12)
 would-have-automerged: 61% · median score 2 · 0 nondeterministic re-runs
+⚠ facts resolved live (today), not as of each MR — treat the % as an estimate
 ```
 
 61% automerge on day one, and the 12 blocks are all real topic deletions. Ship it.
@@ -73,11 +74,13 @@ would-have-automerged: 61% · median score 2 · 0 nondeterministic re-runs
 ## Step 5 — wire CI (GitLab first)
 
 ```yaml
-# .gitlab-ci.yml
+# included from a PROTECTED source (compliance pipeline / protected include) — the assent
+# job definition must not be editable from the MR branch (ADR-0015 §4); `assent doctor`
+# verifies this and the required forge settings (all-threads-resolved merge gate) at setup.
 assent:
   image: ghcr.io/<org>/assent:v0
   rules: [{ if: $CI_MERGE_REQUEST_IID }]
-  script: [assent run]        # MR context from CI env; token from CI variable
+  script: [assent run]        # MR context from CI env; least-privilege token from CI variable
 ```
 
 ## Step 6 — the contributor experience
@@ -89,8 +92,11 @@ interrupted.
 The same dev shrinks retention on a prod topic: assent opens a **resolvable thread** —
 headline message, then collapsible *"Why this check exists & how to fix"* (with the rule's
 `docs.url`) and *"Evaluation details"* sections ([ADR-0012](../adr/0012-presentation-templates-debug.md)).
-They resolve the thread ("intentional, ticket TOPIC-123"), the re-run sees all threads
-resolved, and the MR proceeds.
+They resolve the thread ("intentional, ticket TOPIC-123"). assent had already armed the
+forge's auto-merge, pinned to the evaluated commit — so the moment the last thread is
+resolved, **GitLab itself** merges (ADR-0009 amendment). Any new push cancels that and
+re-evaluates from scratch; the policies that judged this MR came from the *target* branch,
+so nobody can weaken the rules in the MR they gate (ADR-0015).
 
 Something weird? Anyone can ask locally:
 

@@ -62,3 +62,23 @@ finding list, per-rule traces, score arithmetic, and the aggregation path taken.
   but implicitly.
 - *"Vouch-coverage is annoying; default-allow with deny rules is less work."* — Default-allow
   automerge on config repos is how outages happen; annoyance is the feature.
+
+## Amendment (2026-07-21, adversarial review F6/F7/F10)
+
+**Tri-state predicates (F6).** A predicate evaluates to true / false / **error** (missing
+fact, type mismatch, cost-limit hit, undefined). Error is fail-safe by effect: on a `vouch`
+rule it means **no vouch**; on a `block`/`challenge`/`comment` rule the effect **fires**,
+with the error surfaced in the finding details. An error can never silently make a rule
+"not fire" in the permissive direction.
+
+**Cross-pack coverage (F10).** When multiple packs are routed (union of findings, strictest
+threshold), coverage is: an entry is covered iff **at least one routed pack vouches it**, and
+**any** `block`/`challenge` from **any** routed pack stands — union of denies, single-vouch
+trust. A strict pack that must not be undercut by a broad base-pack vouch declares
+`coverage: exclusive` in its `pack.yaml`, requiring the vouch to come from itself for the
+classes it owns. The multi-pack worked example belongs in the Phase-3 spec.
+
+**Score is intra-MR only (F7).** Risk points do not accumulate across MRs (stateless,
+D-007); salami-slicing a large change into many small MRs defeats the threshold by design.
+Operators must not read the score histogram as a rate limiter; cross-MR accumulation would
+require serve-mode state and is explicitly out of scope for v1.

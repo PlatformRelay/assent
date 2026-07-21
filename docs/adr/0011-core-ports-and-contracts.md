@@ -117,3 +117,20 @@ type Publisher interface {
   per-company reimplementation story is one interface with four transport options.
 - *"Let rules call providers on demand."* — Rejected: kills purity, caching, and dry-run
   fidelity; pre-resolution with declared provider deps keeps evaluation a pure function.
+
+## Amendment (2026-07-21, adversarial review F3/F9/F11)
+
+- **SHA-guarded writes (F3):** `Approve(ctx, d Decision, sha Pin)` and
+  `Merge(ctx, d Decision, sha Pin)` — adapters must use the forge's compare-and-swap
+  (GitLab `merge?sha=`, GitHub merge `sha`); on mismatch they fail closed. Conformance-suite
+  case, per ADR-0015 §2.
+- **Hermetic pins (F9):** `Pins` additionally records the **full resolved fact set** and
+  per-provider resolution timestamps. Replay of a historical decision re-uses pinned facts —
+  never re-resolves. `scan` resolves facts at scan time unless a fact snapshot is supplied;
+  its report must carry a `facts: live` caveat flag that `stats` surfaces next to any
+  backtest percentage.
+- **Per-change predicate binding (F11):** a rule's predicate is evaluated **once per matched
+  change**, with `old/new/path/kind/file/entry/oldEntry` bound to that change (scope table in
+  the ADR-0013 appendix). A `vouch` covers exactly the changes whose predicate returned true;
+  false or error leaves that change uncovered (tri-state per ADR-0007 amendment). `entry` /
+  `oldEntry` (containing entry at head/base) are added to the PolicyInput contract.

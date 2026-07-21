@@ -20,5 +20,6 @@ and spikes in the planning workflow (see [`../planning/meta-plan.md`](../plannin
 | [0010](0010-config-files-repo-layout.md) | Configuration files and governed-repo layout | Proposed |
 | [0011](0011-core-ports-and-contracts.md) | Core Go ports and public contracts (draft shapes) | Proposed |
 | [0012](0012-presentation-templates-debug.md) | Presentation: comment rendering, expandable details, docs links, rule debug | Proposed |
-| 0013 | *(reserved: assert syntax & backend — architect draft in review)* | — |
+| [0013](0013-assert-syntax-and-backend.md) | `assert` syntax and backend: CEL-leaf condition trees on cel-go ([gallery](0013-appendix-syntax-gallery.md)) | Proposed |
 | [0014](0014-adopter-test-format.md) | Adopter test format — policy tests as a public contract | Proposed |
+| [0015](0015-trust-boundaries-merge-integrity.md) | Trust boundaries and merge-time integrity (from the 2026-07-21 adversarial review) | Proposed |

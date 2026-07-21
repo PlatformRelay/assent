@@ -12,9 +12,11 @@
 | OQ-8 | Decision replay/audit: JSON report artifact enough, or signed/attested decision record later? | Phase 3 | v1: artifact (Pins in report); attestations later epic |
 | OQ-9 | Version pinning for reproducibility (tool digest + policy SHA in report `Pins`)? | Phase 3 | must be in the report schema from day 1 |
 | OQ-10 | Monorepo support: multiple policy scopes per repo (path-scoped `.assent/` dirs)? | Phase 3 | likely bindings-level path scoping |
-| OQ-11 | `assert` backend implementation: embed **kyverno-json** (`pkg/jsonengine`) vs native **cel-go** — maturity vs control? | ADR-0002 accept | Spike A; wrapper interface makes it reversible either way |
-| OQ-12 | `assert` authored syntax: Kyverno assertion trees, CEL expression strings, or trees-with-CEL-leaves? | ADR-0002/0010 accept | Spike A decides by writing all archetypes in each |
+| OQ-11 | ~~kyverno-json vs cel-go~~ **Leading answer: cel-go** (ADR-0013 — kyverno-json dormant ~18mo, bus factor ≈1, heavy deps) | ADR-0013 accept | Spike A narrowed to residual code risk (numeric coercion, error UX, cost/purity, trace wiring, activation model) |
+| OQ-12 | ~~assert authored syntax~~ **Leading answer: hybrid** — `all`/`any`/`not` trees with CEL leaves + per-leaf `message`, string shorthand (ADR-0013 + gallery) | ADR-0013 accept | existing draft samples stay valid as shorthand |
 | OQ-13 | Risk score conventions: point scale, per-binding thresholds only, or also effect escalation (env promotes `challenge`→`block`)? | ADR-0007 accept | start: points + thresholds only |
 | OQ-14 | `serve` (webhook) in v1 or v1.x? Event dedup + re-eval-on-thread-resolution semantics needed | ADR-0009 accept | leading: v1.x, architecture-ready from day 1 |
-| OQ-15 | Resource-rename detection: similarity threshold, and is fold-to-`rename` opt-in per class? | ADR-0003 accept | fail-safe fallback = raw delete+add (stricter) |
+| OQ-15 | ~~fold-to-rename opt-in?~~ **Committed: opt-in per class, default raw; rename never laxer than delete** (ADR-0003 amendment, review F12) | ADR-0003 accept | residual: similarity metric itself |
+| OQ-17 | `facts.max_age` default (ADR-0015 §3): 24h reasonable? Per-provider overrides? | ADR-0015 accept | security-sensitive facts likely need shorter |
+| OQ-18 | GitHub challenge parity (sharpens OQ-7 after ADR-0009 amendment): can REQUEST_CHANGES + conversation-resolution + SHA-pinned auto-merge reproduce the GitLab arm-and-wait flow, incl. who dismisses the bot's review? | ADR-0005 accept / E8 | Phase 1.3 dossier |
 | OQ-16 | Which **open-source repos** join the demo/test corpus (kubernetes/org, JulieOps/kafka-gitops topologies, octoDNS zones, Backstage catalogs, GitHub safe-settings)? | Phase 1.1 | operator also provides 2–3 generalized private shapes (D-008) |

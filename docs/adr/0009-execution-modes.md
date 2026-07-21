@@ -49,3 +49,24 @@ Shipping order: `run`/`--dry-run`/`explain` in v1; `serve` in v1.x once the CI p
 - *"Webhook-first like a bot framework."* — Event-driven is operationally heavier (state,
   HA, secrets custody) and most target orgs can add a CI job trivially; CI-first keeps the
   trust story simple ("it runs in *your* pipeline with *your* token").
+
+## Amendment (2026-07-21, adversarial review F2/F3): the challenge-resolution mechanism
+
+One-shot CI cannot observe thread resolution (forges do not trigger pipelines on it), so the
+original "merges after all threads are resolved *and* re-evaluation passes" promise had no
+mechanism. Fixed as follows — **the forge, not assent, enforces resolution**:
+
+1. On `challenge` findings (and no block), assent posts the resolvable threads, records the
+   decision, **approves conditionally and arms forge auto-merge pinned to the evaluated SHA**
+   (GitLab: "merge when pipeline succeeds" + all-discussions-resolved merge gate, `merge?sha=`;
+   GitHub mapping per OQ-7). The forge merges when every thread is resolved.
+2. **Resolution alone does not re-run assent** — this is now an explicit, documented
+   property, compensated by: any new push cancels the armed merge and re-evaluates
+   (forge-native), the SHA pin (ADR-0015 §2) guarantees only the evaluated commit can merge,
+   and fact staleness is bounded by `facts.max_age` (ADR-0015 §3).
+3. Repos that need genuine re-evaluation on resolution (e.g. re-checking facts at merge
+   time) use `serve` mode (v1.x) — that is its primary justification.
+
+Adoption prerequisite (per ADR-0015 §4): the repo's forge settings must enable the
+all-threads-resolved merge gate; `assent doctor` verifies this and the protected-pipeline
+topology before the tool arms any auto-merge.

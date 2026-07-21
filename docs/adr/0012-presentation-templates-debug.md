@@ -83,3 +83,13 @@ report. Defaults ship embedded; overriding is opt-in per template, not all-or-no
 
 - *"Let rules write markdown directly."* — Fast at first, then every pack invents its own
   look, templates leak forge-specific syntax, and dry-run output diverges from posted output.
+
+## Amendment (2026-07-21, adversarial review F8): rendering is injection-safe
+
+All interpolated values (`{{ old }}`, `{{ new }}`, facts, file content) are **escaped for
+markdown/HTML** and rendered in a **single pass** — user-controlled content is never
+re-evaluated as a template, and raw HTML from values is neutralized so authors cannot forge
+"approved" banners, close `<details>` blocks early, or hide findings. Untrusted values are
+additionally length-clamped in comments (full values live in the JSON report). State is never
+parsed back from comment text: thread resolution and decision state always come from the
+forge API and the report artifact.

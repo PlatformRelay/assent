@@ -53,3 +53,12 @@ the versioned public API.
 
 - *"Just do HTTP webhooks, skip go-plugin."* — Possible v1 simplification; tier 3 may be
   deferred if tier 2 proves sufficient in the design spike. Tracked as open question OQ-4.
+
+## Amendment (2026-07-21, adversarial review F4/F6)
+
+- `failure: open` is **forbidden** for any provider whose facts are referenced by a `vouch`
+  rule or a risk threshold — `assent lint` fails the config. Fail-open is only legal for
+  purely informational (`comment`) facts.
+- Provider results carry resolution timestamps; the full resolved fact set is recorded in the
+  decision report (`Pins`) for hermetic replay, and fact freshness at merge time is bounded
+  per [ADR-0015 §3](0015-trust-boundaries-merge-integrity.md).

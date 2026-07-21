@@ -59,3 +59,13 @@ represented but expression *evaluation* is out of scope for v1.
 - *"JSON-merge-patch or JSONPatch already exist."* — JSONPatch is a good serialization
   candidate for `Change`, but alone it lacks old-values, file events, and opaque fallbacks;
   we may still adopt its path syntax (RFC 6901).
+
+## Amendment (2026-07-21, adversarial review F12)
+
+Fold-to-`rename` is **opt-in per class** (`classes[].renames: detect|raw`, default `raw`),
+because the similarity threshold is otherwise an attacker-tunable downgrade knob (craft the
+paired add to sit just above the threshold and convert a `block`-able delete into a
+resolvable `challenge`). Additionally, a `rename` can never be treated *less* strictly than
+the `delete` of the same class: the engine applies the stricter of the class's delete/rename
+effects. Golden tests must include adversarial near-threshold pairs, not only correctness
+pairs.

@@ -1,0 +1,28 @@
+# Binaries & build output
+bin/
+dist/
+*.test
+coverage*.out
+cov.out
+
+# Go
+vendor/
+
+# Docs site
+site/
+.venv*/
+
+# Editors / OS
+.DS_Store
+.idea/
+*.swp
+
+# Local env & secrets
+.envrc
+.env
+*.local
+
+# Agent workspace (session-local, never committed)
+agent-context/
+.claude/*
+!.claude/settings.json

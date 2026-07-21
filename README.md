@@ -1,0 +1,68 @@
+# verdict-2 (working title)
+
+> **Status: pre-alpha / design phase.** Nothing here is stable — not even the name.
+
+**verdict-2** is a deterministic, policy-driven **auto-merge gate** for self-service
+configuration repositories. Drop it into a repo's CI pipeline and it turns merge requests /
+pull requests into decisions: **approve, comment, request changes, or block** — based on
+rules *you* write, in **Rego** or a **Kyverno-style declarative YAML**.
+
+The goal: make any config repo automerge-capable with deterministic, testable, reviewable
+rules — without writing a custom bot per repo.
+
+## Why
+
+Most changes to config repos (topic definitions, service catalogs, tfvars, tenant onboarding
+files) are routine: a team edits *their own* entries within safe bounds. Yet a human still has
+to review every MR, reconstructing the same context each time — what changed, who owns it, is
+it destructive, which policy applies. verdict-2 encodes that reasoning as policy so the routine
+90% merges itself and reviewers spend their attention on the risky 10%.
+
+## What it does (intended scope)
+
+- **Runs in the pipeline** — GitLab CI first, GitHub Actions next. One process per MR/PR, no
+  long-lived service required.
+- **Understands structured changes** — parses JSON, YAML, and HCL/tfvars into a canonical
+  change model (field-level adds / modifies / deletes), so policies reason about *semantics*,
+  not diff lines.
+- **Policies in Rego or declarative YAML** — both frontends compile to the same decision
+  engine; pick whichever your team reads best.
+- **Pluggable permission & fact providers** — "is the author allowed to touch this entry?"
+  can be answered by Keycloak, LDAP, GitLab/GitHub group membership, a CODEOWNERS-style file,
+  or your own plugin.
+- **Acts like a reviewer** — posts findings as resolvable review threads, comments,
+  approves/denies, and (when everything is green) merges. Same behaviour on GitLab and GitHub.
+- **Testable by design** — repo owners get a test harness: fixture changes in, expected
+  decision out. Policies without tests are a lint error, not a style choice.
+
+See [`docs/vision.md`](docs/vision.md) for the full intended use case and
+[`docs/planning/meta-plan.md`](docs/planning/meta-plan.md) for how we get from here to a
+precise implementation plan.
+
+## Repository layout
+
+| Path | Purpose |
+| --- | --- |
+| `docs/vision.md` | Intended use case, personas, north-star |
+| `docs/adr/` | Architecture decision records (template + numbered ADRs) |
+| `docs/architecture/` | C4 diagrams (mermaid) |
+| `docs/decisions/` | Lightweight operator decision log (D-nnn) |
+| `docs/planning/` | Meta-plan and open questions |
+| `openspec/` | Spec-driven development: specs (Given/When/Then, REQ IDs) and change proposals |
+| `cmd/verdict2/` | CLI entry point (stub) |
+| `internal/` | Go packages (hexagonal: core + ports + adapters) — see `internal/README.md` |
+| `examples/` | Sample policies (Rego + declarative) and sample self-service repo layouts |
+| `test/e2e/` | End-to-end strategy: kind-hosted GitLab / testcontainers |
+| `hack/kind/` | Local kind cluster setup for e2e |
+
+## Development
+
+Spec/test-driven, gates in the [`Taskfile`](Taskfile.yml):
+
+```bash
+task check   # fmt + vet + lint + test
+```
+
+## License
+
+[MIT](LICENSE) — © 2026 Konrad Heimel.

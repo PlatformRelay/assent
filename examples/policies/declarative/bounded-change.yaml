@@ -1,0 +1,26 @@
+# DRAFT — illustrative Kyverno-style declarative rule; same archetype as
+# ../rego/bounded_change.rego. Schema is frozen in meta-plan Phase 3 (see OQ-3).
+apiVersion: policy.verdict2.dev/v1alpha1
+kind: MergePolicy
+metadata:
+  name: bounded-change-partitions
+spec:
+  rules:
+    - name: no-decrease
+      match:
+        changes:
+          - path: "**/partitions"
+            kind: modify
+      validate:
+        severity: review
+        message: "partitions may not decrease ({{ old }} -> {{ new }})"
+        expr: "new >= old"
+    - name: within-quota
+      match:
+        changes:
+          - path: "**/partitions"
+            kind: modify
+      validate:
+        severity: review
+        message: "partitions {{ new }} exceeds quota {{ facts.quota.max_partitions }}"
+        expr: "new <= facts.quota.max_partitions"

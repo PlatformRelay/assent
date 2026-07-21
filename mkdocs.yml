@@ -1,0 +1,21 @@
+site_name: verdict-2 (working title)
+docs_dir: docs
+theme:
+  name: material
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+nav:
+  - Home: index.md
+  - Vision: vision.md
+  - ADRs: adr/README.md
+  - Architecture:
+      - Context: architecture/c4-context.md
+      - Containers: architecture/c4-container.md
+  - Planning:
+      - Meta-plan: planning/meta-plan.md
+      - Open questions: planning/open-questions.md
+  - Decisions: decisions/decisions.md

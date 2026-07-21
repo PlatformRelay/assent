@@ -1,0 +1,26 @@
+# git-cliff configuration — gitmoji-conventional commits -> categorized changelog.
+[changelog]
+header = "# Changelog\n\n"
+body = """
+{% if version %}## {{ version }} - {{ timestamp | date(format="%Y-%m-%d") }}{% else %}## Unreleased{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}- {{ commit.message | split(pat="\n") | first }}
+{% endfor %}{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = false
+filter_unconventional = false
+commit_parsers = [
+  { message = "^:sparkles:|^feat", group = "Features" },
+  { message = "^:bug:|^fix", group = "Fixes" },
+  { message = "^:memo:|^docs", group = "Documentation" },
+  { message = "^:recycle:|^refactor", group = "Refactoring" },
+  { message = "^:white_check_mark:|^test", group = "Testing" },
+  { message = "^:lock:|^security", group = "Security" },
+  { message = "^:wrench:|^:tada:|^chore|^build|^ci", group = "Chores" },
+  { message = ".*", group = "Other" },
+]
+tag_pattern = "v[0-9]*"

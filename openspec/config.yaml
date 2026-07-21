@@ -1,0 +1,40 @@
+# OpenSpec project config — injected into every planning request (spec-driven workflow).
+schema: spec-driven
+
+context: |
+  Project: verdict-2 (working title, name pending — D-001) — open-source, deterministic,
+  policy-driven auto-merge gate for self-service config repos. MIT licensed.
+  Runs as a one-shot CLI in CI (GitLab CI first, GitHub Actions later); no long-lived service in v1.
+  Core is pure/hexagonal: PolicyInput (canonical ChangeSet + facts + MR metadata) -> Decision + Findings
+  (APPROVE | REVIEW | BLOCK). Determinism is a hard NFR: same input, same decision — enforced by a
+  golden double-run gate. No LLM in the decision path.
+  Policy frontends: Rego (OPA, embedded) + Kyverno-style declarative YAML — both over one engine (ADR-0002).
+  Change model: format adapters (JSON, YAML, HCL/tfvars) -> value tree -> structural diff (ADR-0003);
+  unparseable input becomes an explicit opaque-change -> fail-safe to human review.
+  Providers (permissions/facts): tiered — built-ins (forge groups, OIDC/Keycloak, LDAP, owners-file),
+  HTTP/exec, gRPC go-plugin, WASM future (ADR-0004). Policies never do I/O; providers produce facts.
+  Forge port: behaviour-specified, GitLab adapter first, GitHub second; conformance suite defines the
+  port (ADR-0005). E2E against real GitLab in kind or testcontainer (ADR-0006, OQ-6).
+  Sanitization: fully open source — no employer names, internal system names, or internal policy
+  content in any committed artifact (D-002). Sample repos are generated, generic equivalents.
+  Commits: :gitmoji: type(scope): summary — ASCII shortcode only. No AI co-author trailers (D-004).
+  Implementation: TDD mandatory; one logical change per commit; specs before code (D-005).
+
+rules:
+  proposal:
+    - State problem, scope, and non-goals explicitly.
+    - Link to ADR(s) and decision-log entries (D-nnn) where relevant.
+    - Name counterpoints considered.
+  specs:
+    - Use Given / When / Then for behavioural requirements.
+    - Map requirements to epic ID (E1..E9, meta-plan Phase 5) and story ID (E1-S01).
+    - Assign stable REQ IDs (REQ-E1-S01-01) with "Test:" (artifact path) and "Verify:" (command).
+    - Tag Level: L0|L1|L2|L3 per ADR-0006. One test artifact per REQ — no exceptions.
+  design:
+    - Prefer mermaid diagrams; reference docs/architecture/ and internal package sketch.
+    - Public contracts (PolicyInput, Decision/Findings, Provider, Forge port) change only via
+      a spec change proposal — never silently.
+  tasks:
+    - Vertical slices; each task independently verifiable.
+    - Include gate command(s) that must pass before merge (task check at minimum).
+    - List "add failing test" before "implement" for each story.

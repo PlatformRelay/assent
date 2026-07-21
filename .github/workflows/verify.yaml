@@ -1,0 +1,17 @@
+# CI stub — becomes active once the repo is pushed (blocked on naming, D-001).
+name: verify
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: CGO_ENABLED=0 go build ./...

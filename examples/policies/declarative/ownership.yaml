@@ -1,0 +1,17 @@
+# DRAFT — archetype "ownership": authors may only modify entries owned by a group they
+# belong to. Membership arrives as a fact from a permission provider (ADR-0004):
+# Keycloak, LDAP, GitLab/GitHub groups, or an ownership file — the rule doesn't care.
+apiVersion: policy.verdict2.dev/v1alpha1
+kind: MergePolicy
+metadata:
+  name: ownership
+spec:
+  rules:
+    - name: author-owns-entry
+      match:
+        changes:
+          - path: "topics/**"
+      validate:
+        severity: review
+        message: "author is not a member of owning group {{ entry.owner }}"
+        expr: "entry.owner in facts.author.groups"

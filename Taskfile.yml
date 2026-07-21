@@ -1,0 +1,50 @@
+version: "3"
+
+tasks:
+  default:
+    cmds: [task --list]
+    silent: true
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - gofmt -w ./cmd ./internal 2>/dev/null || gofmt -w ./cmd
+
+  vet:
+    desc: Static analysis
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: golangci-lint (requires golangci-lint installed)
+    cmds:
+      - golangci-lint run ./...
+
+  test:
+    desc: Unit tests with race detector
+    cmds:
+      - go test -race ./...
+
+  build:
+    desc: Build the CLI
+    cmds:
+      - CGO_ENABLED=0 go build -o bin/verdict2 ./cmd/verdict2
+
+  check:
+    desc: "Gate: fmt + vet + lint + test + build (must pass before every commit)"
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
+      - task: build
+
+  e2e:
+    desc: E2E tests against a real GitLab (build tag e2e) — see test/e2e/README.md
+    cmds:
+      - go test -tags e2e ./test/e2e/...
+
+  docs:
+    desc: Serve the docs site locally
+    cmds:
+      - mkdocs serve

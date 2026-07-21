@@ -63,3 +63,13 @@ per event. No API-only file fetching — partial views breed nondeterminism and 
 - *"Put match globs on every rule instead of a classifier stage."* — Works at small scale,
   but environment × class × pack routing then lives half-duplicated inside every rule;
   bindings centralize it and make the risk-threshold table explicit and auditable.
+
+## Amendment (2026-07-21, second review P2-10): fail-safe by construction
+
+Convention becomes lint hard-errors: (a) a `vouch` rule must be scoped to at least one
+explicit class or non-catch-all path — `match: {changes: [{path: "**"}]}` with effect
+`vouch` fails `assent lint`; (b) the `unclassified` and `assent-policy` classes are
+engine-reserved — a vouch rule matching them is rejected at load, not merely discouraged;
+(c) environment matchers declare explicit `priority` (or must be provably non-overlapping) —
+silent order-dependence of "last match wins" is removed, and reordering the list cannot
+silently re-route prod to dev thresholds.

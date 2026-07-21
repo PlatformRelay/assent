@@ -70,3 +70,11 @@ mechanism. Fixed as follows — **the forge, not assent, enforces resolution**:
 Adoption prerequisite (per ADR-0015 §4): the repo's forge settings must enable the
 all-threads-resolved merge gate; `assent doctor` verifies this and the protected-pipeline
 topology before the tool arms any auto-merge.
+
+## Amendment 2 (2026-07-21, second review P2-12): scan honesty
+
+`scan` also records each historical MR's **actual outcome** (merged / closed / reverted) and
+`stats` reports the decision-vs-outcome confusion matrix — "61% would-have-automerged" only
+proves self-consistency; "of the MRs we would have automerged, how many did humans merge
+unchanged?" is the number that earns trust. Batch *apply* over past MRs stays out of scope
+(recorder-only; OQ-20).

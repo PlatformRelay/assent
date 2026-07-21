@@ -125,3 +125,15 @@ spec:
 - *"One big file is simpler."* — For toy repos, yes; it destroys pack shareability and makes
   ownership (CODEOWNERS on `.assent/packs/x/`) impossible. `init` can still generate a
   minimal single-pack layout.
+
+## Amendment (2026-07-21, second review P2-9 / security review A-12)
+
+- Starter packs must match destructive intent, not one change kind: `no-topic-deletion`-style
+  rules match `kind: [delete, rename]` — otherwise the rename-fold (ADR-0003) walks a
+  de-facto delete+recreate past the block rule.
+- Remote packs (when they land, OQ-5): pinned by **commit SHA** (tags are mutable), checksum/
+  signature verified, and subject to the same target-ref/no-self-modification rule as local
+  policy (ADR-0015 §1).
+- The lint hard-error list (vouch scoping, reserved classes, environment priority,
+  fail-open restrictions, docs-on-challenge/block, tests-per-rule) is consolidated in the
+  Phase 3 spec for `assent lint`.

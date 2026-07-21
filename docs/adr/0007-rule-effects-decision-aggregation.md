@@ -82,3 +82,25 @@ classes it owns. The multi-pack worked example belongs in the Phase-3 spec.
 D-007); salami-slicing a large change into many small MRs defeats the threshold by design.
 Operators must not read the score histogram as a rate limiter; cross-MR accumulation would
 require serve-mode state and is explicitly out of scope for v1.
+
+## Amendment 2 (2026-07-21, second review P1-6/P1-7)
+
+**Points multiplicity.** The predicate runs once per matched change (ADR-0011 amendment);
+`points` accrue **per firing**, not per rule. `vouch` + `points` is therefore the built-in
+bulk-change guard: ten vouched partition bumps at `points: 1` against a prod threshold of 4
+→ REVIEW, by design ("individually safe, collectively worth a look"). Starter packs must
+use points sparingly and the docs must state this multiplication explicitly.
+
+**Rego vouch polarity.** Rego modules are violations-shaped; a violation feeds
+`comment`/`challenge`/`block` effects. A rego-backed `vouch` rule must return the explicit
+set of vouched change paths (`vouch contains path if { … }`); anything not in the set stays
+uncovered. No implicit "no violation = vouch".
+
+**`onFail` branch (kills negation pairs).** A rule may declare an `onFail:` block
+(`effect`, `message`, `points`) applied to matched changes whose predicate is **false** —
+one predicate, both outcomes, no hand-negated twin rules that drift. The shipped
+bounded-change example demonstrated the failure this fixes: `vouch` on
+`new >= old && new <= quota` left the quota-exceeded case silently uncovered with no
+message; with `onFail: {effect: challenge, message: "…exceeds quota…"}` the contributor gets
+told. Predicate **error** remains its own case (tri-state, amendment 1): errors never take
+the `onFail` branch — they fail safe by effect.

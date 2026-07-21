@@ -134,3 +134,17 @@ type Publisher interface {
   the ADR-0013 appendix). A `vouch` covers exactly the changes whose predicate returned true;
   false or error leaves that change uncovered (tri-state per ADR-0007 amendment). `entry` /
   `oldEntry` (containing entry at head/base) are added to the PolicyInput contract.
+
+## Amendment 2 (2026-07-21, second review P1-4/P1-5/P2-11)
+
+- **Content-keyed facts (P1-4):** `FactQuery` carries the class-sliced ChangeSet (paths,
+  old/new values, classes, environment) — not just author+paths — and `config.yaml` provider
+  entries may declare **key extractors** (JSON-pointer expressions over changed entries,
+  e.g. `extract: { costCenter: "/metadata/costCenter" }`) whose extracted values arrive in
+  the query. Without this, any "referenced X must exist" provider is unimplementable.
+- **Publisher lifecycle ops (P1-5):** the port gains `UpsertComment` (idempotent, marker-
+  keyed), and `SyncThreads` (open new / resolve stale / **reopen or re-post when a resolved
+  thread's underlying value changed**) driven by the finding-lifecycle state machine in
+  ADR-0012 amendment 2. `Comment`/`OpenThread` alone cannot express idempotent re-runs.
+- **Positions (P2-11):** `Change` carries file+line/column spans (ADR-0003 amendment 2) so
+  findings can anchor inline threads; `Finding` gains an optional `Anchor`.

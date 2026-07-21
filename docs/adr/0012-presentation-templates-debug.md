@@ -93,3 +93,24 @@ re-evaluated as a template, and raw HTML from values is neutralized so authors c
 additionally length-clamped in comments (full values live in the JSON report). State is never
 parsed back from comment text: thread resolution and decision state always come from the
 forge API and the report artifact.
+
+## Amendment 2 (2026-07-21, second review P1-5 / security review A-08)
+
+**Finding lifecycle (state machine, frozen with Phase 3 contracts).** Stable finding key =
+`(rule id, file, path, value-hash)`. On every run the publisher reconciles posted state
+against current findings via HTML marker comments (decision hash + finding key):
+unchanged → leave; new → post; no longer firing → resolve-with-note ("outdated as of
+<sha>"); **fired again with a different value-hash → the old resolved thread is stale
+consent: post a fresh challenge thread and note the supersession** (a resolved
+"retention shrink to X — sure?" never authorizes a later shrink to Y). Re-runs and
+crash-recovery are idempotent upserts — never duplicate spam. The summary comment embeds
+the decision hash and report-artifact link, and is the only edited-in-place comment.
+High-cardinality findings (same rule, many paths) collapse into one thread with a path list
+beyond a configurable cap.
+
+**Secret redaction (A-08).** Facts carry a `sensitive` marker (provider- or config-
+declared); sensitive values are redacted from comments, debug sections, traces, logs, and
+the report artifact by default (report keeps a salted hash for replay comparison).
+Renderer additionally scrubs known secret patterns. Providers must never return raw
+credentials as facts. Template scope includes `env` so packs can vary wording per
+environment honestly (nonprod findings should not claim production stakes).

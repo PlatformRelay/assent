@@ -63,6 +63,10 @@ resolvable thread or approves + merges → emits the JSON report. Everything rea
 minimal.
 
 - **Gate**: the L3 e2e for the skeleton is green and replayable; determinism gate active.
+- **Adoption gate (D-012)**: Phase 4 is not "done" until **one real repository** (a personal/
+  demo self-service repo counts, a synthetic fixture does not) has run assent on live MRs.
+  Deferred tiers (rego, gRPC, WASM, GitHub, serve, remote packs) unlock only with a named
+  consumer — seams stay designed, contracts stay unfrozen until then.
 
 ## Phase 5 — Epic execution
 

@@ -19,4 +19,8 @@
 | OQ-15 | ~~fold-to-rename opt-in?~~ **Committed: opt-in per class, default raw; rename never laxer than delete** (ADR-0003 amendment, review F12) | ADR-0003 accept | residual: similarity metric itself |
 | OQ-17 | `facts.max_age` default (ADR-0015 §3): 24h reasonable? Per-provider overrides? | ADR-0015 accept | security-sensitive facts likely need shorter |
 | OQ-18 | GitHub challenge parity (sharpens OQ-7 after ADR-0009 amendment): can REQUEST_CHANGES + conversation-resolution + SHA-pinned auto-merge reproduce the GitLab arm-and-wait flow, incl. who dismisses the bot's review? | ADR-0005 accept / E8 | Phase 1.3 dossier |
+| OQ-19 | Post-merge reconciliation: bad-automerge audit + auto-revert-MR creation — v1.x epic or out of scope? (Second review flagged: `scan` replays but detects nothing post-merge) | roadmap | needs serve/scheduled mode; design seam only for now |
+| OQ-20 | Batch/sweep apply mode (evaluate+act over many open MRs in one run, cron-style) — or is per-MR CI + serve enough? | roadmap | `scan` stays recorder-only either way |
+| OQ-21 | Per-rule rollout phases (off / advisory / enforce) in the envelope — or is editing effects in the pack (advisory = comment) sufficient? | Phase 3 | leading: no phase field in v1; document the effect-editing pattern |
+| OQ-22 | Envelope `match` on MR metadata: labels, draft status, author allowlists — which belong in `match.mr` for v1? | Phase 3 | draft-MRs likely skipped by default in CI template |
 | OQ-16 | Which **open-source repos** join the demo/test corpus (kubernetes/org, JulieOps/kafka-gitops topologies, octoDNS zones, Backstage catalogs, GitHub safe-settings)? | Phase 1.1 | operator also provides 2–3 generalized private shapes (D-008) |

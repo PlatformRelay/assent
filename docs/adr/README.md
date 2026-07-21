@@ -20,3 +20,5 @@ and spikes in the planning workflow (see [`../planning/meta-plan.md`](../plannin
 | [0010](0010-config-files-repo-layout.md) | Configuration files and governed-repo layout | Proposed |
 | [0011](0011-core-ports-and-contracts.md) | Core Go ports and public contracts (draft shapes) | Proposed |
 | [0012](0012-presentation-templates-debug.md) | Presentation: comment rendering, expandable details, docs links, rule debug | Proposed |
+| 0013 | *(reserved: assert syntax & backend — architect draft in review)* | — |
+| [0014](0014-adopter-test-format.md) | Adopter test format — policy tests as a public contract | Proposed |

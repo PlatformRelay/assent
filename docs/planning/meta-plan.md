@@ -48,9 +48,9 @@ Run each Proposed ADR (0002–0006) through a weighted trade-off matrix + target
 
 ## Phase 3 — Contracts first
 
-Freeze the four public contracts as versioned schemas **with fixtures before any engine code**:
+Freeze the five public contracts as versioned schemas **with fixtures before any engine code**:
 PolicyInput, Decision/Findings, Provider request/response, Forge-port conformance suite
-(as executable spec skeletons).
+(as executable spec skeletons), and the **adopter test fixture format** (ADR-0014, D-010).
 
 - **Gate**: contracts reviewed; golden fixtures exist; `openspec/specs/` epics written with
   REQ IDs, each REQ carrying `Test:` and `Verify:` per [openspec/config.yaml](../../openspec/config.yaml).

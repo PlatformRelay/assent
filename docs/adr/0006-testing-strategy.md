@@ -33,6 +33,12 @@ under `test/e2e/`; the spike measures boot time and flakiness and picks the CI d
 **Determinism gate**: golden tests re-run each decision twice and diff — any nondeterminism is
 a build failure.
 
+**Coverage gate (D-010)**: TDD is mandatory from the first implementation PR; CI enforces
+**≥90% line coverage** on `internal/…` from the start — the bar exists before the code does,
+no ratchet-up-later. The 90% is measured on Go unit + integration tests (L0–L2); e2e (L3) is
+excluded from the metric. The adopter-facing fixture format is specified in
+[ADR-0014](0014-adopter-test-format.md) and is a **frozen public contract**.
+
 ## Consequences
 
 - The adopter harness is a first-class product surface, not an afterthought — it gets its own

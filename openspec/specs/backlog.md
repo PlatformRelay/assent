@@ -12,27 +12,26 @@ REQ ID format: `REQ-<epic>-S<story>-<nn>` (e.g. `REQ-P1-E2-S01-01`).
 
 | ID | Epic | Spec | Status | Needs operator | Gate contribution |
 | --- | --- | --- | --- | --- | --- |
-| P1-E1 | Sample corpus: generalized repos + OSS corpus (OQ-16, D-008) | [spec](p1-e1-sample-corpus/spec.md) | Ready (S02 unblocked; S01 partially unblocked — 3 of ~5 source shapes provided, D-019) | yes (2 more repo shapes) | fixtures for the archetype gate |
-| P1-E2 | Rule-archetype inventory + success metric (OQ-25) | [spec](p1-e2-archetype-inventory/spec.md) | Ready | yes (holdout adjudication) | **the Phase-1 gate**: every archetype has example change + expected decision |
-| P1-E3 | Forge behaviour dossier: GitLab + GitHub (OQ-7/18/23) | [spec](p1-e3-forge-dossier/spec.md) | Ready | no | feeds ADR-0005/0017 acceptance |
-| P1-E4 | Prior-art review | [spec](p1-e4-prior-art/spec.md) | Ready | no | feeds ADR acceptance round |
+| P1-E1 | Sample corpus: generalized repos + OSS corpus (OQ-16, D-008) | [spec](p1-e1-sample-corpus/spec.md) | **Done** (generic samples + corpus; optional extra shapes remain D-019) | optional (2 more shapes) | fixtures for the archetype gate |
+| P1-E2 | Rule-archetype inventory + success metric (OQ-25) | [spec](p1-e2-archetype-inventory/spec.md) | **Done** — **Phase-1 gate CLOSED** | yes (holdout adjudication still operator) | **the Phase-1 gate**: every archetype has example change + expected decision |
+| P1-E3 | Forge behaviour dossier: GitLab + GitHub (OQ-7/18/23) | [spec](p1-e3-forge-dossier/spec.md) | **Done** | no | feeds ADR-0005/0017 acceptance |
+| P1-E4 | Prior-art review | [spec](p1-e4-prior-art/spec.md) | **Done** | no | feeds ADR acceptance round |
 
-**Phase-1 gate**: archetype inventory reviewed; every archetype has ≥1 concrete example
-change + expected decision written down (P1-E2-S02).
+**Phase-1 gate**: CLOSED — archetype inventory + per-archetype DRAFT fixtures on main.
 
 ## Phase 2 — Spikes & ADR firming
 
 | ID | Epic | Spec | Status | Needs operator | Gate contribution |
 | --- | --- | --- | --- | --- | --- |
-| P2-E1 | Spike A — CEL: coercion, error UX, cost/purity, trace, activation model | [spec](p2-e1-spike-cel/spec.md) | Blocked on P1-E2-S02 (fixture cases) | no | ADR-0013/0016 acceptance evidence |
-| P2-E2 | Spike B — GitLab-in-kind vs testcontainer (OQ-6) | [spec](p2-e2-spike-e2e/spec.md) | Ready | no | ADR-0006 acceptance evidence |
-| P2-E3 | Spike C — typed HTTP/exec provider contract + token isolation | [spec](p2-e3-spike-provider/spec.md) | Ready | no | ADR-0004/0017 §6 acceptance evidence |
-| P2-E4 | Secure-setup adoption spike (OQ-24) | [spec](p2-e4-spike-secure-setup/spec.md) | Blocked on P1-E3-S01/S02 | yes (timed clean-room run, real repo) | north-star wording; Phase-4 prerequisite |
-| P2-E5 | ADR acceptance round (0002–0017 → Accepted/Superseded) | [spec](p2-e5-adr-acceptance/spec.md) | Blocked on all P2 spikes (P2-E6 excluded) + P1-E3/E4 | yes (operator review) | **the Phase-2 gate** |
+| P2-E1 | Spike A — CEL: coercion, error UX, cost/purity, trace, activation model | [spec](p2-e1-spike-cel/spec.md) | **Done** | no | ADR-0013/0016 acceptance evidence |
+| P2-E2 | Spike B — GitLab-in-kind vs testcontainer (OQ-6) | [spec](p2-e2-spike-e2e/spec.md) | **Done** (CI default = testcontainer) | no | ADR-0006 acceptance evidence |
+| P2-E3 | Spike C — typed HTTP/exec provider contract + token isolation | [spec](p2-e3-spike-provider/spec.md) | **Done** | no | ADR-0004/0017 §6 acceptance evidence |
+| P2-E4 | Secure-setup adoption spike (OQ-24) | [spec](p2-e4-spike-secure-setup/spec.md) | **Done** (topology); north-star timed run **PENDING operator** | yes (timed clean-room run) | north-star wording; Phase-4 prerequisite |
+| P2-E5 | ADR acceptance round (0002–0017 → Accepted/Superseded) | [spec](p2-e5-adr-acceptance/spec.md) | **Done** — **Phase-2 gate CLOSED** (D-020) | yes (ratify 🔴 DECIDED INBOX) | **the Phase-2 gate** |
 | P2-E6 | Spike D — Kubernetes CRD/CR validation feasibility (D-017 B11) | [spec](p2-e6-spike-crd/spec.md) | Deferred to the Phase-3 window (D-018 — not first-wave); does **not** gate P2-E5 | no | feeds ADR-0020 + the E14 go/no-go |
 
-**Phase-2 gate**: every Proposed ADR moved to Accepted or Superseded, each with matrix +
-spike evidence (P2-E5-S02).
+**Phase-2 gate**: CLOSED — ADR-0002..0017 Accepted (D-020); evidence in
+[adr-acceptance-review.md](../../docs/planning/adr-acceptance-review.md).
 
 ## Phases 3–5
 

@@ -54,6 +54,11 @@ PolicyInput, Decision/Findings, Provider request/response, Forge-port conformanc
 
 - **Gate**: contracts reviewed; golden fixtures exist; `openspec/specs/` epics written with
   REQ IDs, each REQ carrying `Test:` and `Verify:` per [openspec/config.yaml](../../openspec/config.yaml).
+- **Gate artifact (ADR-0017 §8, D-016)**: the **strict end-to-end contract fixture** —
+  pinned target/merge result, renamed entry with stable identity, two required obligations,
+  an expired typed fact, a missing required approval, expected DecisionRecord +
+  PresentationModel + publication preconditions — validated against the same JSON Schemas
+  as every example. No engine code before this fixture exists.
 
 ## Phase 4 — Walking skeleton (first implementation slice)
 

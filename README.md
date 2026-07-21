@@ -5,7 +5,8 @@
 **assent** is a deterministic, policy-driven **auto-merge gate** for self-service
 configuration repositories. Drop it into a repo's CI pipeline and it turns merge requests /
 pull requests into decisions: **approve, comment, request changes, or block** — based on
-rules *you* write, in **Rego** or a **Kyverno-style declarative YAML**.
+rules *you* write in a **Kyverno-style declarative YAML** with CEL predicates (a Rego
+escape hatch is designed and unlocks with the first consumer who needs it — D-012).
 
 The goal: make any config repo automerge-capable with deterministic, testable, reviewable
 rules — without writing a custom bot per repo.
@@ -20,8 +21,8 @@ it destructive, which policy applies. assent encodes that reasoning as policy so
 
 ## What it does (intended scope)
 
-- **Runs in the pipeline** — GitLab CI first, GitHub Actions next. One process per MR/PR, no
-  long-lived service required.
+- **Runs in the pipeline** — GitLab CI in v1; GitHub Actions is a designed seam that unlocks
+  per D-012. One process per MR/PR, no long-lived service required.
 - **Understands structured changes** — parses JSON, YAML, and HCL/tfvars into a canonical
   change model (field-level adds / modifies / deletes), so policies reason about *semantics*,
   not diff lines.

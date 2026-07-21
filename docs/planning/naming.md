@@ -1,5 +1,8 @@
 # Naming candidates (OQ-1)
 
+> **Decision 2026-07-21: assent** (#4) — see D-009. Table kept for the record. Before going
+> public: verify GitHub org/repo availability and the `assent.dev` domain.
+
 Criteria: short CLI-friendly command, evokes judging/gating/merging, no strong collision in
 the dev-tools space, available-ish on GitHub. Collision notes are quick checks, not clearance —
 whatever shortlists must be re-verified (GitHub org, domain, pkg.go.dev, trademark smell test).

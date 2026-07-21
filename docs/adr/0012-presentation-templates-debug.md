@@ -61,7 +61,7 @@ in place on re-runs, never re-posted.
 
 ### Extendability
 
-Repo-level template overrides in `.verdict/templates/` (finding, summary, decision footers) —
+Repo-level template overrides in `.assent/templates/` (finding, summary, decision footers) —
 Go `text/template` over the exported Finding/Decision structs, same data contract as the JSON
 report. Defaults ship embedded; overriding is opt-in per template, not all-or-nothing.
 

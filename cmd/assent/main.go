@@ -1,4 +1,4 @@
-// Command verdict2 is the CLI entry point for the auto-merge gate.
+// Command assent is the CLI entry point for the auto-merge gate.
 //
 // Pre-alpha stub: real subcommands (run, test, lint, render) arrive with the
 // walking skeleton (meta-plan Phase 4). Kept minimal so `go build ./...` and
@@ -14,9 +14,9 @@ var version = "0.0.0-dev"
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "version" {
-		fmt.Println("verdict2 " + version)
+		fmt.Println("assent " + version)
 		return
 	}
-	fmt.Fprintln(os.Stderr, "verdict2 (pre-alpha): no commands implemented yet — see docs/planning/meta-plan.md")
+	fmt.Fprintln(os.Stderr, "assent (pre-alpha): no commands implemented yet — see docs/planning/meta-plan.md")
 	os.Exit(2)
 }

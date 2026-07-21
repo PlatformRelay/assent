@@ -2,7 +2,7 @@
 schema: spec-driven
 
 context: |
-  Project: verdict-2 (working title, name pending — D-001) — open-source, deterministic,
+  Project: assent (name decided 2026-07-21, D-009) — open-source, deterministic,
   policy-driven auto-merge gate for self-service config repos. MIT licensed.
   Runs as a one-shot CLI in CI (GitLab CI first, GitHub Actions later); no long-lived service in v1.
   Core is pure/hexagonal: PolicyInput (canonical ChangeSet + facts + MR metadata) -> Decision + Findings

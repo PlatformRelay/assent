@@ -1,7 +1,7 @@
 # DRAFT — archetype "ownership": authors may only modify entries owned by a group they
 # belong to. Membership arrives as a fact from a permission provider (ADR-0004):
 # Keycloak, LDAP, GitLab/GitHub groups, or an ownership file — the rule doesn't care.
-apiVersion: verdict2.dev/v1alpha1
+apiVersion: assent.dev/v1alpha1
 kind: MergePolicy
 metadata:
   name: ownership

@@ -4,7 +4,7 @@ Hexagonal: a pure decision core, ports for everything with a side effect.
 
 ```mermaid
 flowchart LR
-    subgraph cli["verdict2 CLI (one static binary, one run per MR)"]
+    subgraph cli["assent CLI (one static binary, one run per MR)"]
         direction TB
         subgraph inbound["Ingestion"
             ]
@@ -51,7 +51,7 @@ flowchart LR
 ## Package sketch (subject to spec phase)
 
 ```
-cmd/verdict2/          CLI entrypoints: run, test, lint, render
+cmd/assent/          CLI entrypoints: run, test, lint, render
 internal/core/         engine, decision model, policy loading   (pure)
 internal/change/       value tree, differ, ChangeSet            (pure)
 internal/format/       json | yaml | hcl adapters

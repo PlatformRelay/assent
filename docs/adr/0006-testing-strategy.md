@@ -21,7 +21,7 @@ forge, because thread/approval/merge semantics are exactly what mocks get wrong.
 | Level | Scope | Vehicle |
 | --- | --- | --- |
 | L0 | engine, change model, frontends | Go unit + **golden decision tests** (fixture PolicyInput → expected Decision/Findings, diffable JSON) + property tests for the differ |
-| L1 | policy packs | the **user-facing harness**: `verdict2 test` runs fixture changes against a policy dir and asserts decisions — same harness we ship to adopters, dogfooded on `examples/` |
+| L1 | policy packs | the **user-facing harness**: `assent test` runs fixture changes against a policy dir and asserts decisions — same harness we ship to adopters, dogfooded on `examples/` |
 | L2 | forge adapters | contract tests against recorded API cassettes |
 | L3 | end-to-end | real GitLab: **kind-hosted GitLab** (local, `hack/kind/`) and/or **GitLab testcontainer** (CI) seeding generated sample repos; conformance suite per ADR-0005; GitHub via test org later |
 

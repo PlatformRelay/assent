@@ -16,10 +16,10 @@ shareable across repos while wiring stays local.
 
 ## Decision (proposed)
 
-Everything lives under **`.verdict/`** in the governed repo (name follows OQ-1):
+Everything lives under **`.assent/`** in the governed repo (name follows OQ-1):
 
 ```
-.verdict/
+.assent/
 ├── config.yaml          # repo wiring: environments, change classes, providers
 ├── bindings.yaml        # routing: (class, environment) -> packs + risk thresholds
 ├── packs/
@@ -40,7 +40,7 @@ Remote packs (central policy repos, pinned by git ref) are planned via
 ### `config.yaml` — repo wiring
 
 ```yaml
-apiVersion: verdict2.dev/v1alpha1
+apiVersion: assent.dev/v1alpha1
 kind: Config
 environments:
   - name: prod
@@ -64,7 +64,7 @@ providers:
 ### `bindings.yaml` — routing + risk
 
 ```yaml
-apiVersion: verdict2.dev/v1alpha1
+apiVersion: assent.dev/v1alpha1
 kind: RulesetBinding
 bindings:
   - class: kafka-topic
@@ -84,7 +84,7 @@ bindings:
 ### A rule file — envelope with effects, scope, both predicate backends
 
 ```yaml
-apiVersion: verdict2.dev/v1alpha1
+apiVersion: assent.dev/v1alpha1
 kind: MergePolicy
 metadata: { name: topic-safety }
 spec:
@@ -116,12 +116,12 @@ spec:
 - `config.yaml` is the only file that knows company-specific wiring (providers!); packs stay
   portable and publishable. This is the seam that makes per-company permission
   reimplementation (ADR-0004) a config exercise plus one small provider service.
-- Tests are first-class repo citizens next to the packs they test; `verdict2 lint` fails packs
+- Tests are first-class repo citizens next to the packs they test; `assent lint` fails packs
   without tests.
 - All kinds share one `apiVersion` line for engine-version gating and future migrations.
 
 ## Counterpoints considered
 
 - *"One big file is simpler."* — For toy repos, yes; it destroys pack shareability and makes
-  ownership (CODEOWNERS on `.verdict/packs/x/`) impossible. `init` can still generate a
+  ownership (CODEOWNERS on `.assent/packs/x/`) impossible. `init` can still generate a
   minimal single-pack layout.

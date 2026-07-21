@@ -3,7 +3,7 @@
 Hosts the test GitLab instance ([test/e2e](../../test/e2e/README.md), path 1).
 
 ```bash
-kind create cluster --name verdict2 --config kind-config.yaml
+kind create cluster --name assent --config kind-config.yaml
 # GitLab install + seeding scripts arrive with meta-plan Spike B / epic E7.
 ```
 

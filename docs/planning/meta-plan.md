@@ -75,7 +75,7 @@ Spec-first, vertical slices per epic (proposed cut, refined in Phase 3):
 | E3 | Declarative YAML frontend |
 | E4 | Forge: GitLab adapter (threads, approve, merge) |
 | E5 | Provider host: built-ins + HTTP/exec |
-| E6 | Adopter test harness (`verdict2 test`) + examples |
+| E6 | Adopter test harness (`assent test`) + examples |
 | E7 | E2E infra: kind GitLab, sample-repo generator, conformance suite |
 | E8 | Forge: GitHub adapter + Actions entrypoint |
 | E9 | Distribution: releases, container, CI templates, docs site |

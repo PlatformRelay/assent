@@ -22,13 +22,13 @@ untested, invisible to the people governed by it, and dies with its author.
 
 ## The product
 
-**verdict-2** is a generic, open-source auto-merge gate that any self-service repo can adopt:
+**assent** is a generic, open-source auto-merge gate that any self-service repo can adopt:
 
 1. **Install**: add one job to the repo's pipeline (GitLab CI first; GitHub Actions next) and a
-   policy directory (e.g. `.verdict/`) to the repo.
+   policy directory (e.g. `.assent/`) to the repo.
 2. **Describe**: write rules in **Rego** or a **Kyverno-style declarative YAML** against a
    canonical model of the change — not against raw diff text.
-3. **Trust**: verdict-2 evaluates every MR/PR deterministically and acts like a reviewer:
+3. **Trust**: assent evaluates every MR/PR deterministically and acts like a reviewer:
    resolvable review threads for findings, comments explaining the decision, approve/deny, and
    auto-merge when the decision is APPROVE and the platform's own gates (CI green, discussions
    resolved) are met.
@@ -54,7 +54,7 @@ policy before trusting it, feeding `stats` — no database, just report artifact
 
 ## What makes it different
 
-| Capability | Typical bespoke bot | verdict-2 |
+| Capability | Typical bespoke bot | assent |
 | --- | --- | --- |
 | Change understanding | regex on diff lines | canonical field-level change model for JSON / YAML / HCL-tfvars |
 | Rule language | imperative script | Rego or declarative YAML, versioned in the governed repo |
@@ -118,5 +118,6 @@ The repo ships:
 
 ## Naming note
 
-"verdict-2" is a **working title**. The public name is undecided; no public repo will be
-created until it is (see D-001 in [`docs/decisions/decisions.md`](decisions/decisions.md)).
+**assent** — "to give assent": formal, considered approval. Chosen 2026-07-21 (D-009 in
+[`docs/decisions/decisions.md`](decisions/decisions.md)); the public repo is created as a
+separate, explicit operator step (D-001).

@@ -26,3 +26,4 @@ site/
 agent-context/
 .claude/*
 !.claude/settings.json
+/assent

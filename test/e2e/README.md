@@ -19,7 +19,7 @@ before committing CI to it.
 ## Shape of an e2e case (both paths)
 
 1. Seed: create sample project + policy dir, configure bot user/token.
-2. Act: open an MR with a fixture change; run `verdict2 run` as the pipeline would.
+2. Act: open an MR with a fixture change; run `assent run` as the pipeline would.
 3. Assert against the **forge API**: threads created/resolvable, approval state, merge state,
    and the emitted JSON report — this doubles as the forge-port conformance suite (ADR-0005).
 

@@ -28,7 +28,7 @@ tasks:
   build:
     desc: Build the CLI
     cmds:
-      - CGO_ENABLED=0 go build -o bin/verdict2 ./cmd/verdict2
+      - CGO_ENABLED=0 go build -o bin/assent ./cmd/assent
 
   check:
     desc: "Gate: fmt + vet + lint + test + build (must pass before every commit)"

@@ -1,4 +1,4 @@
-# Imagined walkthrough — adopting verdict-2 on a topic registry
+# Imagined walkthrough — adopting assent on a topic registry
 
 > **This is design fiction.** Nothing below is implemented; it exists so we can *feel* the
 > UX before freezing contracts (meta-plan Phase 3). Where a command or field survives review,
@@ -22,17 +22,17 @@ Today every MR waits for a platform engineer. Goal: routine changes merge themse
 ## Step 1 — init (5 min)
 
 ```console
-$ verdict2 init --sample topic-registry
-created .verdict/config.yaml        (environments: prod/dev by path; class: kafka-topic)
-created .verdict/bindings.yaml      (kafka-topic -> pack "topics", thresholds dev=10 prod=4)
-created .verdict/packs/topics/      (starter rules: ownership, bounded-change, no-deletion)
-created .verdict/tests/topics/      (passing fixtures for every starter rule)
-next: verdict2 test && verdict2 scan --since 90d
+$ assent init --sample topic-registry
+created .assent/config.yaml        (environments: prod/dev by path; class: kafka-topic)
+created .assent/bindings.yaml      (kafka-topic -> pack "topics", thresholds dev=10 prod=4)
+created .assent/packs/topics/      (starter rules: ownership, bounded-change, no-deletion)
+created .assent/tests/topics/      (passing fixtures for every starter rule)
+next: assent test && assent scan --since 90d
 ```
 
 ## Step 2 — make a rule yours
 
-Edit the starter pack (`.verdict/packs/topics/rules/safety.yaml`), e.g. cap partitions via
+Edit the starter pack (`.assent/packs/topics/rules/safety.yaml`), e.g. cap partitions via
 your quota provider and challenge retention shrinks — see the full rule file example in
 ADR-0010. Wire your company's permission source in `config.yaml`:
 
@@ -44,23 +44,23 @@ providers:
 ## Step 3 — test the policy like code
 
 ```console
-$ verdict2 test
+$ assent test
 PACK topics
   ✓ partition-increase-ok            APPROVE            (2 vouched, score 1/10)
   ✓ partition-decrease-challenged    REVIEW: challenge  retention-shrink-challenge
   ✓ topic-delete-blocked             BLOCK              no-topic-deletion
   ✗ foreign-topic-edit               expected REVIEW, got APPROVE
       ownership: facts.author.groups fixture lists team-orders; entry owner is team-billing
-      -> did you mean expect: REVIEW (uncovered)?  see .verdict/tests/topics/foreign-topic-edit/
+      -> did you mean expect: REVIEW (uncovered)?  see .assent/tests/topics/foreign-topic-edit/
 4 fixtures, 3 passed, 1 failed
 ```
 
 ## Step 4 — backtest before trusting it
 
 ```console
-$ verdict2 scan --since 90d --out reports/
+$ assent scan --since 90d --out reports/
 scanned 214 MRs (2026-04-22..2026-07-21)
-$ verdict2 stats reports/
+$ assent stats reports/
 outcome      count   %          top rules firing
 APPROVE        131   61%        bounded-change/partition-increase (88)
 REVIEW          71   33%        retention-shrink-challenge (24), uncovered-change (31)
@@ -74,10 +74,10 @@ would-have-automerged: 61% · median score 2 · 0 nondeterministic re-runs
 
 ```yaml
 # .gitlab-ci.yml
-verdict:
-  image: ghcr.io/<org>/verdict2:v0
+assent:
+  image: ghcr.io/<org>/assent:v0
   rules: [{ if: $CI_MERGE_REQUEST_IID }]
-  script: [verdict2 run]        # MR context from CI env; token from CI variable
+  script: [assent run]        # MR context from CI env; token from CI variable
 ```
 
 ## Step 6 — the contributor experience
@@ -86,7 +86,7 @@ A dev bumps `partitions: 12 -> 24` on their own topic in dev: pipeline runs, the
 summary comment ("APPROVE — 1 change vouched, score 1/10"), approval, and merges. Nobody was
 interrupted.
 
-The same dev shrinks retention on a prod topic: verdict-2 opens a **resolvable thread** —
+The same dev shrinks retention on a prod topic: assent opens a **resolvable thread** —
 headline message, then collapsible *"Why this check exists & how to fix"* (with the rule's
 `docs.url`) and *"Evaluation details"* sections ([ADR-0012](../adr/0012-presentation-templates-debug.md)).
 They resolve the thread ("intentional, ticket TOPIC-123"), the re-run sees all threads
@@ -95,7 +95,7 @@ resolved, and the MR proceeds.
 Something weird? Anyone can ask locally:
 
 ```console
-$ verdict2 explain --mr 481
+$ assent explain --mr 481
 change topics/prod/orders.yaml /retentionMs modify 604800000 -> 86400000
   class kafka-topic · env prod · binding -> packs [topics, topics-strict] threshold 4
   ✓ matched retention-shrink-challenge   assert "new < old" = true -> effect challenge

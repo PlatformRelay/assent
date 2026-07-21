@@ -1,8 +1,8 @@
-# verdict-2 (working title)
+# assent
 
-> **Status: pre-alpha / design phase.** Nothing here is stable — not even the name.
+> **Status: pre-alpha / design phase.** All APIs, schemas, and commands are drafts.
 
-**verdict-2** is a deterministic, policy-driven **auto-merge gate** for self-service
+**assent** is a deterministic, policy-driven **auto-merge gate** for self-service
 configuration repositories. Drop it into a repo's CI pipeline and it turns merge requests /
 pull requests into decisions: **approve, comment, request changes, or block** — based on
 rules *you* write, in **Rego** or a **Kyverno-style declarative YAML**.
@@ -15,7 +15,7 @@ rules — without writing a custom bot per repo.
 Most changes to config repos (topic definitions, service catalogs, tfvars, tenant onboarding
 files) are routine: a team edits *their own* entries within safe bounds. Yet a human still has
 to review every MR, reconstructing the same context each time — what changed, who owns it, is
-it destructive, which policy applies. verdict-2 encodes that reasoning as policy so the routine
+it destructive, which policy applies. assent encodes that reasoning as policy so the routine
 90% merges itself and reviewers spend their attention on the risky 10%.
 
 ## What it does (intended scope)
@@ -49,7 +49,7 @@ precise implementation plan.
 | `docs/decisions/` | Lightweight operator decision log (D-nnn) |
 | `docs/planning/` | Meta-plan and open questions |
 | `openspec/` | Spec-driven development: specs (Given/When/Then, REQ IDs) and change proposals |
-| `cmd/verdict2/` | CLI entry point (stub) |
+| `cmd/assent/` | CLI entry point (stub) |
 | `internal/` | Go packages (hexagonal: core + ports + adapters) — see `internal/README.md` |
 | `examples/` | Sample policies (Rego + declarative) and sample self-service repo layouts |
 | `test/e2e/` | End-to-end strategy: kind-hosted GitLab / testcontainers |

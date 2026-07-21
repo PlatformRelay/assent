@@ -1,4 +1,4 @@
-# verdict-2 documentation
+# assent documentation
 
 - [Vision & intended use case](vision.md)
 - [ADRs](adr/README.md)

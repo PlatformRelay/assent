@@ -1,6 +1,6 @@
 # DRAFT — illustrative rule in the YAML envelope (ADR-0002 v2 / ADR-0010); same archetype
 # as ../rego/bounded_change.rego. `assert` syntax is decided by Spike A (OQ-12).
-apiVersion: verdict2.dev/v1alpha1
+apiVersion: assent.dev/v1alpha1
 kind: MergePolicy
 metadata:
   name: bounded-change-partitions

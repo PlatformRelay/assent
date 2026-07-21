@@ -32,7 +32,7 @@ runtime-loaded data (ADR-0002); this ADR is about *imperative* extension points.
 1. **Built-ins** (in-tree, config-activated): forge group membership (GitLab/GitHub), OIDC/
    Keycloak group lookup, LDAP, ownership-file (CODEOWNERS-style) — covering the common cases
    with zero plugin code.
-2. **HTTP / exec provider**: declare an endpoint or executable in config; verdict-2 calls it
+2. **HTTP / exec provider**: declare an endpoint or executable in config; assent calls it
    with a versioned JSON request and expects a versioned JSON response. Any language, no SDK.
 3. **gRPC plugins** (`hashicorp/go-plugin`): for providers needing streaming, caching hooks,
    or richer lifecycle; subprocess model matches the one-shot CI execution well.

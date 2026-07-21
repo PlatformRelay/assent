@@ -69,3 +69,14 @@ resolvable `challenge`). Additionally, a `rename` can never be treated *less* st
 the `delete` of the same class: the engine applies the stricter of the class's delete/rename
 effects. Golden tests must include adversarial near-threshold pairs, not only correctness
 pairs.
+
+## Amendment 2 (2026-07-21, security review A-05 / review P2-11)
+
+- **Input limits**: format adapters enforce max file size/count, nesting depth, and YAML
+  anchor/alias expansion caps (billion-laughs); symlinks and path-traversal names are
+  rejected; parse runs under a deadline. Any breach yields `opaque-change` → fail-safe
+  REVIEW (never a crash, never a skip).
+- **Source positions are first-class**: every `Change` carries file + line/column spans for
+  old and new values (adapters must preserve positions at parse time — retrofitting them
+  later means rewriting the parsers). This is what makes forge inline/line-anchored comments
+  possible; `Finding.Paths` alone cannot anchor a thread to a diff line.

@@ -62,3 +62,13 @@ the versioned public API.
 - Provider results carry resolution timestamps; the full resolved fact set is recorded in the
   decision report (`Pins`) for hermetic replay, and fact freshness at merge time is bounded
   per [ADR-0015 §3](0015-trust-boundaries-merge-integrity.md).
+
+## Amendment 2 (2026-07-21, security review A-03)
+
+The provider tiers gain an explicit trust model (normative text in
+[ADR-0015 §7](0015-trust-boundaries-merge-integrity.md)): providers never receive the forge
+write token; exec/gRPC binaries are digest-pinned (optional signature verification); the
+gRPC tier is documented as elevated-risk until sandboxed; WASM (tier 4) is the designated
+sandbox path for untrusted provider code. Secret-bearing facts must be declared `sensitive`
+(redaction contract in ADR-0012 amendment 2); providers must never return raw credentials
+as facts.

@@ -96,3 +96,36 @@ credential), and the same target-ref policy loading as §1.
   policy MR is gated by the old policy + human review — exactly right.
 - *"SHA-guard + freshness makes automerge slower."* — It makes automerge *checkable*. The
   fast path (APPROVE at evaluation time, merge immediately, SHA still HEAD) is unaffected.
+
+## Additions (2026-07-21, independent security review A-03/A-04/A-05/A-10)
+
+### 7. Provider/plugin trust model (A-03)
+
+Providers run **without the forge write token** — the provider host passes a narrow FactQuery
+and receives facts; the approve/merge credential never enters a provider's environment or
+process. Exec/gRPC provider binaries are **digest-pinned** in `config.yaml` (optional cosign
+verification); default recommendation is *no in-process third-party code* — subprocess with
+narrow JSON RPC (tier 2) or WASM (tier 4) are the sanctioned paths, and the gRPC tier is
+documented as elevated-risk until sandboxing lands. Provider timeouts fail closed (facts
+`unknown` → fail-safe per ADR-0007 tri-state).
+
+### 8. Execution-authority matrix (A-04)
+
+| Mode / context | May hold write token | May auto-approve/merge |
+| --- | --- | --- |
+| CI from protected/trusted config (§4) | yes (least-privilege) | yes |
+| CI on fork / untrusted-contributor MR | **no** | advisory-only (report, no writes) |
+| `serve` (v1.x, §6) | yes (per-repo scoped) | yes |
+| `--dry-run` / `explain` / `test` / `scan` | no | never |
+
+`assent doctor` refuses to arm auto-merge when it cannot verify the protected-config
+precondition.
+
+### 9. Input resource safety & report retention (A-05, review P1-3)
+
+Parsing and evaluation run under hard limits — max file size/count, max diff bytes, nesting
+depth, YAML anchor/alias expansion caps, symlink and path-traversal rejection, parse+eval
+deadlines, CEL cost budget — breach fails closed to REVIEW (spec'd with ADR-0003). The
+summary comment always embeds the decision hash and a link to the report artifact; docs must
+warn that CI artifact retention limits the audit window and recommend a retention policy for
+report artifacts.

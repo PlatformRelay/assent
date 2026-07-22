@@ -33,25 +33,30 @@ Phase-3 freeze review by a later lane, per
   enforcing findings so a rule's phase transition is visible in a plain structural diff of
   two loaded-policy snapshots, with no bespoke diff logic required.
 - **Operator input**: no.
-- **Dependencies**: P3-E1 (authored-resource + DecisionRecord schemas must exist to extend);
-  ADR-0017 §2–4 (the enforcing aggregation this must not weaken).
+- **Dependencies**: P3-E1-S01/S02 (authored-resource + DecisionRecord schemas must exist to
+  extend); P3-E1-S06 (`docs/planning/lint-hard-errors.md` — S01-04 adds this epic's row to
+  that doc, not a separate one); ADR-0017 §2–4 (the enforcing aggregation this must not
+  weaken).
 - **Definition of done**: the phase field is required (no default — every rule states its
-  phase explicitly, consistent with ADR-0017 §9's strict-decode posture) on the rule and pack
-  schemas; `assent lint`'s hard-error list (ADR-0010 amendment) gains a rule rejecting any
-  authored construct that fakes rollout by omitting/hollowing a rule's effects instead of
-  setting `phase: off`/`observe`; DecisionRecord's finding schema tags every finding with the
-  phase it fired under, and only `enforce`-phase findings are eligible inputs to the
-  aggregation fields (ADR-0007) — `observe`-phase findings are structurally excluded, not
-  merely excluded by convention.
+  phase explicitly, consistent with ADR-0017 §9's strict-decode posture) on `MergePolicy`
+  rules (extending P3-E1-S01's schema) and on a new `schemas/policy/v1alpha1/pack.schema.json`
+  this epic introduces for `pack.yaml` (ADR-0010's pack manifest is not one of P3-E1's three
+  authored-resource schemas — P3-E4 is where its schema is first specified, driven by D-017
+  (B2)'s "rules/**packs**" wording); `assent lint`'s hard-error list (P3-E1-S06's
+  `docs/planning/lint-hard-errors.md`) gains a named `no-implicit-enforce-phase` row; and
+  DecisionRecord's finding schema (extending P3-E1-S02) tags every finding with the phase it
+  fired under, with only `enforce`-phase findings eligible as inputs to the aggregation
+  fields (ADR-0007) — `observe`-phase findings are structurally excluded, not merely excluded
+  by convention.
 
 Requirements:
 
-- **REQ-P3-E4-S01-01** — Given a rule or pack declaration, when it is parsed and linted, then
-  the schema requires a `phase` field with exactly the enum `off | observe | enforce`, missing
-  or unknown values are a hard lint error (never a silent default), and an `off`-phase rule's
+- **REQ-P3-E4-S01-01** — Given a rule declaration, when it is parsed and linted, then the
+  schema requires a `phase` field with exactly the enum `off | observe | enforce`, missing or
+  unknown values are a hard lint error (never a silent default), and an `off`-phase rule's
   predicate is never invoked by the evaluator (compile/lint-checked only).
-  - Test: `schemas/policy/v1alpha1/rule.schema.json`
-  - Verify: `grep -q '"phase"' schemas/policy/v1alpha1/rule.schema.json && grep -q '"enum": \["off", "observe", "enforce"\]' schemas/policy/v1alpha1/rule.schema.json`
+  - Test: `schemas/policy/v1alpha1/merge-policy.schema.json`
+  - Verify: `grep -q '"phase"' schemas/policy/v1alpha1/merge-policy.schema.json && grep -q '"enum": \["off", "observe", "enforce"\]' schemas/policy/v1alpha1/merge-policy.schema.json`
   - Level: doc
 - **REQ-P3-E4-S01-02** — Given a rule at `phase: observe`, when it fires, then its finding is
   recorded in DecisionRecord's `findings.observed` array with the outcome it *would* have had,
@@ -71,15 +76,29 @@ Requirements:
   - Test: `docs/planning/policy-lifecycle-phase.md`
   - Verify: `grep -qi "phase transition" docs/planning/policy-lifecycle-phase.md && grep -q "structural diff" docs/planning/policy-lifecycle-phase.md`
   - Level: doc
-- **REQ-P3-E4-S01-04** — Given `assent lint`'s hard-error list, when a pack author edits a
-  rule's `effect`/`onFailure` to approximate rollout instead of using `phase`, then no lint
-  rule can detect that intent directly (it is a modeling choice, not a syntax error) — so the
-  documented contract instead makes the *sanctioned* path strictly easier: the lint hard-error
-  list rejects any binding that sets `phase: enforce` implicitly via field omission, forcing
-  every rule to carry the field explicitly (REQ-P3-E4-S01-01) and closing the ambiguity the
+- **REQ-P3-E4-S01-04** — Given `assent lint`'s hard-error list (consolidated per
+  `docs/planning/lint-hard-errors.md`, P3-E1-S06), when a pack author edits a rule's
+  `effect`/`onFailure` to approximate rollout instead of using `phase`, then no lint rule can
+  detect that intent directly (it is a modeling choice, not a syntax error) — so the
+  documented contract instead makes the *sanctioned* path strictly easier: the hard-error list
+  gains a named rule, `no-implicit-enforce-phase`, that rejects any rule/pack document missing
+  an explicit `phase` field (REQ-P3-E4-S01-01/S01-05 already make omission a hard error at the
+  schema level; this REQ requires the *lint documentation* to name and cross-reference that
+  rule so operators can find why an undecorated rule fails), closing the ambiguity the
   effect-editing anti-pattern exploited.
-  - Test: `docs/adr/0010-config-files-repo-layout.md`
-  - Verify: `grep -qi "phase" docs/adr/0010-config-files-repo-layout.md`
+  - Test: `docs/planning/lint-hard-errors.md`
+  - Verify: `test -f docs/planning/lint-hard-errors.md && grep -q "no-implicit-enforce-phase" docs/planning/lint-hard-errors.md`
+  - Level: doc
+- **REQ-P3-E4-S01-05** — Given a pack manifest (`pack.yaml`, ADR-0010) declaring its own
+  `phase` alongside rules that declare theirs, when policy loads, then the pack's `phase`
+  acts as a **ceiling**, never additive: a pack at `off` evaluates none of its rules
+  regardless of any rule's own phase; a pack at `observe` caps every contained rule at
+  `observe` even if the rule itself declares `enforce`; only a pack at `enforce` lets each
+  rule's own declared phase stand. Adversarial case: a rule declared `phase: enforce` inside
+  a pack declared `phase: observe` must never contribute to `decision`/`blocks`/`score.total`
+  — same exclusion guarantee as REQ-P3-E4-S01-02, composed one level up.
+  - Test: `schemas/policy/v1alpha1/pack.schema.json`
+  - Verify: `grep -q '"phase"' schemas/policy/v1alpha1/pack.schema.json && grep -q '"enum": \["off", "observe", "enforce"\]' schemas/policy/v1alpha1/pack.schema.json`
   - Level: doc
 
 ## P3-E4-S02 — Named policy profiles + single-writer rule + precedence table
@@ -240,50 +259,59 @@ Requirements:
 ## P3-E4-S05 — Compatibility-fixture scenarios: observe-vs-enforce + refused auto-merge-widening
 
 - **Goal**: the one sanitized named-consumer compatibility fixture in the mandatory Phase-3
-  fixture set (owned and authored by P3-E1, per its exit gate and
-  named-consumer-compat.md §1) is extended — by requirements this story states, not by this
-  lane editing P3-E1's files — to exercise two P3-E4-specific scenarios: (a) the same
-  ChangeSet evaluated once at `phase: observe` and once at `phase: enforce` producing
-  identical `decision`/forge-state but different `findings.observed` content, and (b) a
-  candidate profile that would widen auto-merge eligibility (a `newly-auto-mergeable` delta)
-  being refused by the promotion gates because the widening is not in the case's
-  `acceptedDeltas` allowlist.
+  fixture set — owned and authored by P3-E1 at `examples/contracts/named-consumer-compat/`
+  (its `evaluation-input.json`/`decision-record.json` pair, per P3-E1-S07-03) — is extended,
+  by requirements this story states rather than by this lane editing P3-E1's files, to
+  exercise two P3-E4-specific scenarios: (a) the same ChangeSet evaluated once at
+  `phase: observe` and once at `phase: enforce` producing identical `decision`/forge-state
+  but different `findings.observed` content, and (b) a candidate profile that would widen
+  auto-merge eligibility (a `newly-auto-mergeable` delta) being refused by the promotion
+  gates because the widening is not in the case's `acceptedDeltas` allowlist.
 - **Operator input**: no.
-- **Dependencies**: **P3-E1** (owns the fixture file and directory; this story only adds
-  requirements the fixture must satisfy once P3-E1's skeleton exists — no edits to P3-E1's
-  paths from this lane); P3-E4-S01 (phase semantics), P3-E4-S03 (delta taxonomy + promotion
-  gates).
-- **Definition of done**: the fixture (wherever P3-E1 places it) contains a case pair
-  demonstrating (a) and one case demonstrating (b); both validate against the S01/S03
-  schemas; neither case infers phase, profile, or comparison-delta information from message
-  text, labels, or rule names — they are structured fields, per D-017's fixture requirement.
+- **Dependencies**: **P3-E1-S07** (owns `examples/contracts/named-consumer-compat/` and its
+  exact file names; this story only adds requirements those already-planned files must
+  satisfy — no edits to P3-E1's paths from this lane); P3-E4-S01 (phase semantics + the
+  `findings.observed`/`findings.enforcing` split), P3-E4-S03 (delta taxonomy + promotion
+  gates + `acceptedDeltas`).
+- **Definition of done**: `examples/contracts/named-consumer-compat/decision-record.json`
+  (P3-E1-owned file) carries at least one case pair demonstrating (a) and one case
+  demonstrating (b), using exactly the field names S01/S03 define
+  (`findings.observed`/`findings.enforcing`, `newly-auto-mergeable`, `acceptedDeltas`); its
+  sibling `evaluation-input.json` carries `phase` and `profile` as typed fields; neither file
+  infers phase, profile, or comparison-delta information from message text, labels, or rule
+  names — they are structured fields, per D-017's fixture requirement and P3-E1-S07-03's own
+  adversarial check.
 
 Requirements:
 
-- **REQ-P3-E4-S05-01** — Given the named-consumer compatibility fixture's `observe`-phase case
-  and its `enforce`-phase twin (same ChangeSet, same rule, only `phase` differs), when both are
-  evaluated, then `decision`, `blocks`, `requiredReviews`, and `score.total` are byte-identical
-  between the two, while `findings.observed` is populated only in the `observe` case and the
-  corresponding entry appears in `findings.enforcing` only in the `enforce` case — the
-  adversarial check is that swapping which case is "observe" and which is "enforce" without
-  swapping the phase field must fail this comparison, proving the assertion is not
-  vacuously true.
-  - Test: `examples/fixtures/contract/named-consumer-compat/observe-vs-enforce/expect.yaml`
-  - Verify: `test -f examples/fixtures/contract/named-consumer-compat/observe-vs-enforce/expect.yaml`
+- **REQ-P3-E4-S05-01** — Given the named-consumer compatibility fixture's
+  `decision-record.json`, when it represents an `observe`-phase case and its `enforce`-phase
+  twin (same ChangeSet, same rule, only `phase` differs), then `decision`, `blocks`,
+  `requiredReviews`, and `score.total` are byte-identical between the two, while
+  `findings.observed` is populated only in the `observe` case and the corresponding entry
+  appears in `findings.enforcing` only in the `enforce` case — the adversarial check is that
+  swapping which case is "observe" and which is "enforce" without swapping the phase field
+  must fail this comparison, proving the assertion is not vacuously true.
+  - Test: `examples/contracts/named-consumer-compat/decision-record.json`
+  - Verify: `test -f examples/contracts/named-consumer-compat/decision-record.json && grep -q '"observed"' examples/contracts/named-consumer-compat/decision-record.json && grep -q '"enforcing"' examples/contracts/named-consumer-compat/decision-record.json`
   - Level: doc
 - **REQ-P3-E4-S05-02** — Given a candidate profile whose comparison against the baseline
-  yields a `newly-auto-mergeable` delta for one case, when that case's `acceptedDeltas`
-  allowlist does not name it, then the promotion-gate evaluation for that case fails (bounded
-  auto-merge widening gate, S03) and the fixture records the refused-widening outcome
-  explicitly — never a silent pass because "newly auto-mergeable" sounds like an improvement.
-  - Test: `examples/fixtures/contract/named-consumer-compat/refused-widening/expect.yaml`
-  - Verify: `test -f examples/fixtures/contract/named-consumer-compat/refused-widening/expect.yaml`
+  yields a `newly-auto-mergeable` delta for one case represented in the fixture, when that
+  case's `acceptedDeltas` allowlist does not name it, then the promotion-gate evaluation for
+  that case fails (bounded auto-merge widening gate, S03) and
+  `examples/contracts/named-consumer-compat/decision-record.json` records the
+  refused-widening outcome explicitly — never a silent pass because "newly auto-mergeable"
+  sounds like an improvement.
+  - Test: `examples/contracts/named-consumer-compat/decision-record.json`
+  - Verify: `test -f examples/contracts/named-consumer-compat/decision-record.json && grep -q "newly-auto-mergeable" examples/contracts/named-consumer-compat/decision-record.json && grep -q "acceptedDeltas" examples/contracts/named-consumer-compat/decision-record.json`
   - Level: doc
-- **REQ-P3-E4-S05-03** — Given both fixture cases, when inspected for D-017's structured-field
-  requirement, then `phase`, `profile`, and the comparison `delta` kind are typed fields in
-  the fixture's expectation format — never derivable only from a rule name, a label, or
-  message text — matching the same requirement already stated for approval evidence and
-  marker fields in P3-E1's exit gate.
-  - Test: `examples/fixtures/contract/named-consumer-compat/README.md`
-  - Verify: `grep -qi "structured field" examples/fixtures/contract/named-consumer-compat/README.md`
+- **REQ-P3-E4-S05-03** — Given both fixture scenarios, when inspected for D-017's
+  structured-field requirement (the same requirement P3-E1-S07-03 already states for approval
+  evidence and marker fields), then `phase` and `profile` are typed fields in
+  `examples/contracts/named-consumer-compat/evaluation-input.json` — never derivable only
+  from a rule name, a label, or message text; a reviewer grepping the fixture pair for
+  prose-inference patterns (e.g. a message string containing `"phase: enforce"` instead of a
+  `phase` field) finds none, mirroring P3-E1-S07-03's own adversarial check.
+  - Test: `examples/contracts/named-consumer-compat/evaluation-input.json`
+  - Verify: `test -f examples/contracts/named-consumer-compat/evaluation-input.json && grep -q '"phase"' examples/contracts/named-consumer-compat/evaluation-input.json && grep -q '"profile"' examples/contracts/named-consumer-compat/evaluation-input.json`
   - Level: doc

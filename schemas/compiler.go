@@ -23,6 +23,21 @@ var rulesetBindingSchemaJSON []byte
 //go:embed policy/v1alpha1/merge-policy.schema.json
 var mergePolicySchemaJSON []byte
 
+//go:embed decision/v1alpha1/evaluation-input.schema.json
+var evaluationInputSchemaJSON []byte
+
+//go:embed decision/v1alpha1/decision-record.schema.json
+var decisionRecordSchemaJSON []byte
+
+//go:embed decision/v1alpha1/replay-bundle.schema.json
+var replayBundleSchemaJSON []byte
+
+//go:embed decision/v1alpha1/presentation-model.schema.json
+var presentationModelSchemaJSON []byte
+
+//go:embed decision/v1alpha1/publication-receipt.schema.json
+var publicationReceiptSchemaJSON []byte
+
 var (
 	// ConfigSchema validates schemas/policy/v1alpha1/config.schema.json instances.
 	ConfigSchema = mustCompile("config.schema.json", configSchemaJSON)
@@ -30,6 +45,40 @@ var (
 	RulesetBindingSchema = mustCompile("ruleset-binding.schema.json", rulesetBindingSchemaJSON)
 	// MergePolicySchema validates schemas/policy/v1alpha1/merge-policy.schema.json instances.
 	MergePolicySchema = mustCompile("merge-policy.schema.json", mergePolicySchemaJSON)
+)
+
+// decisionSchemaID is the $id of one of the five decision/v1alpha1 runtime
+// record schemas, used as the shared compiler's resource key so cross-file
+// $ref (e.g. ReplayBundle -> EvaluationInput, PresentationModel ->
+// DecisionRecord's finding $def) resolves within one compiler instance
+// instead of drifting from a hand-duplicated copy.
+const (
+	evaluationInputSchemaID    = "https://assent.dev/schemas/decision/v1alpha1/evaluation-input.schema.json"
+	decisionRecordSchemaID     = "https://assent.dev/schemas/decision/v1alpha1/decision-record.schema.json"
+	replayBundleSchemaID       = "https://assent.dev/schemas/decision/v1alpha1/replay-bundle.schema.json"
+	presentationModelSchemaID = "https://assent.dev/schemas/decision/v1alpha1/presentation-model.schema.json"
+	publicationReceiptSchemaID = "https://assent.dev/schemas/decision/v1alpha1/publication-receipt.schema.json"
+)
+
+var decisionSchemas = mustCompileCrossReferenced(map[string][]byte{
+	evaluationInputSchemaID:    evaluationInputSchemaJSON,
+	decisionRecordSchemaID:     decisionRecordSchemaJSON,
+	replayBundleSchemaID:       replayBundleSchemaJSON,
+	presentationModelSchemaID: presentationModelSchemaJSON,
+	publicationReceiptSchemaID: publicationReceiptSchemaJSON,
+})
+
+var (
+	// EvaluationInputSchema validates schemas/decision/v1alpha1/evaluation-input.schema.json instances.
+	EvaluationInputSchema = decisionSchemas[evaluationInputSchemaID]
+	// DecisionRecordSchema validates schemas/decision/v1alpha1/decision-record.schema.json instances.
+	DecisionRecordSchema = decisionSchemas[decisionRecordSchemaID]
+	// ReplayBundleSchema validates schemas/decision/v1alpha1/replay-bundle.schema.json instances.
+	ReplayBundleSchema = decisionSchemas[replayBundleSchemaID]
+	// PresentationModelSchema validates schemas/decision/v1alpha1/presentation-model.schema.json instances.
+	PresentationModelSchema = decisionSchemas[presentationModelSchemaID]
+	// PublicationReceiptSchema validates schemas/decision/v1alpha1/publication-receipt.schema.json instances.
+	PublicationReceiptSchema = decisionSchemas[publicationReceiptSchemaID]
 )
 
 // newCompiler returns a compiler with this package's vendor vocabularies
@@ -64,6 +113,31 @@ func mustCompile(name string, raw []byte) *jsonschema.Schema {
 		panic(fmt.Sprintf("compile %s: %v", name, err))
 	}
 	return sch
+}
+
+// mustCompileCrossReferenced loads every schema into one compiler so
+// absolute $id / $ref URIs across files resolve (ReplayBundle → EvaluationInput,
+// PresentationModel → DecisionRecord $defs, etc.).
+func mustCompileCrossReferenced(resources map[string][]byte) map[string]*jsonschema.Schema {
+	c := newCompiler()
+	for id, raw := range resources {
+		doc, err := jsonschema.UnmarshalJSON(bytes.NewReader(raw))
+		if err != nil {
+			panic(fmt.Sprintf("parse %s: %v", id, err))
+		}
+		if err := c.AddResource(id, doc); err != nil {
+			panic(fmt.Sprintf("add resource %s: %v", id, err))
+		}
+	}
+	out := make(map[string]*jsonschema.Schema, len(resources))
+	for id := range resources {
+		sch, err := c.Compile(id)
+		if err != nil {
+			panic(fmt.Sprintf("compile %s: %v", id, err))
+		}
+		out[id] = sch
+	}
+	return out
 }
 
 // validateJSON parses raw as JSON and validates it against sch.

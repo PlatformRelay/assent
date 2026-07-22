@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/decision/v1alpha1/evaluation-input.schema.json",
+  "title": "EvaluationInput",
+  "description": "Everything a rule's predicate may see for one class slice: the canonical ChangeSet (EntryRef subjects, old/new values, positions), the resolved facts map, MR metadata, and the binding's require: obligation list (ADR-0017 §§2/5/6). Backend-neutral by construction: no field here names a predicate backend (cel, rego, or similar) — a future Rego-backed rule (E11) is representable in the identical input record a CEL-backed rule uses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "changeSet", "facts", "mr", "require"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "EvaluationInput" },
+    "changeSet": { "$ref": "#/$defs/changeSet" },
+    "facts": { "$ref": "#/$defs/facts" },
+    "mr": { "$ref": "#/$defs/mr" },
+    "require": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The binding's required obligation names (ADR-0017 §2); a rule's prove.obligation must match one of these for obligation coverage. May be empty for a class with no obligation-proving rules."
+    }
+  },
+  "$defs": {
+    "entryRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable governed-subject identity, e.g. \"topic-registry:orders.events.v1\" (class:identity, derived from entries.identity.pointer, ADR-0017 §5) or \"file:<path>\" for file-level subjects."
+    },
+    "changeSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changes"],
+      "properties": {
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/change" }
+        }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "file", "path", "kind"],
+      "properties": {
+        "subject": { "$ref": "#/$defs/entryRef" },
+        "file": { "type": "string", "minLength": 1, "description": "Repo-relative path." },
+        "path": { "type": "string", "description": "RFC 6901 JSON Pointer within the file; empty string for a whole-file event." },
+        "kind": { "enum": ["add", "modify", "delete", "rename"] },
+        "old": { "description": "Pre-change value at path; absent for kind: add." },
+        "new": { "description": "Post-change value at path; absent for kind: delete." },
+        "position": { "$ref": "#/$defs/position" }
+      }
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "startLine": { "type": "integer", "minimum": 1 },
+        "startColumn": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "endColumn": { "type": "integer", "minimum": 1 }
+      },
+      "description": "Anchors a finding to an inline forge thread (ADR-0011 amendment 2)."
+    },
+    "facts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/$defs/fact" }
+      },
+      "description": "Keyed by provider name, then output name (docs/planning/predicate-scope.md \"facts\" field)."
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "sensitive", "observedAt"],
+      "properties": {
+        "state": {
+          "enum": ["resolved", "unavailable", "invalid", "expired"],
+          "description": "Distinct machine states, never a silently absent key (Spike C, OQ-17)."
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "Copied from the provider declaration's sensitive flag (schemas/provider/v1alpha1). DecisionRecord/PresentationModel must never carry this fact's raw value when true."
+        },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Required when state is resolved."
+        },
+        "value": { "description": "Present only when state is resolved." },
+        "reason": { "type": "string", "description": "Operator-readable cause for a non-resolved state." }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "resolved" } } },
+          "then": { "required": ["value", "expiresAt"] },
+          "else": { "not": { "required": ["value"] } }
+        }
+      ]
+    },
+    "mr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["author", "sourceBranch", "targetBranch"],
+      "properties": {
+        "author": { "type": "string", "minLength": 1 },
+        "sourceBranch": { "type": "string", "minLength": 1 },
+        "targetBranch": { "type": "string", "minLength": 1 },
+        "labels": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

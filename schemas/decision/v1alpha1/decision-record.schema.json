@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/decision/v1alpha1/decision-record.schema.json",
+  "title": "DecisionRecord",
+  "description": "Redacted, stable outcome + evidence digests (ADR-0016 §3): the audit/stats/report artifact. Findings carry no field capable of holding a raw fact value — redacted by construction, not by convention (OQ-8/OQ-9).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "decision", "findings", "pins"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "DecisionRecord" },
+    "decision": { "enum": ["APPROVE", "REVIEW", "BLOCK"] },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "pins": { "$ref": "#/$defs/pins" }
+  },
+  "$defs": {
+    "entryRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable governed-subject identity, e.g. \"topic-registry:orders.events.v1\" or \"file:<path>\" (ADR-0017 §5)."
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "effect", "subject", "points"],
+      "properties": {
+        "rule": { "type": "string", "minLength": 1 },
+        "obligation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Present only for an obligation-proving rule's finding; absent for a non-obligation effect (ADR-0017 §2)."
+        },
+        "effect": {
+          "enum": ["comment", "challenge", "block", "require-review"],
+          "description": "require-review is satisfied only by forge-proven ApprovalEvidence (ADR-0017 §3), never a bare vouch."
+        },
+        "subject": { "$ref": "#/$defs/entryRef" },
+        "points": { "type": "integer", "minimum": 0 },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable finding code, echoing the proving rule's onFailure.code; correlated across DecisionRecord/PresentationModel."
+        }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolVersion", "toolDigest", "policySha", "sourceSha", "targetSha", "mergeResultDigest", "factsResolvedAt"],
+      "properties": {
+        "toolVersion": { "type": "string", "minLength": 1 },
+        "toolDigest": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Content digest of the evaluating tool build (OQ-9 replayability)."
+        },
+        "policySha": { "type": "string", "minLength": 1 },
+        "sourceSha": { "type": "string", "minLength": 1 },
+        "targetSha": { "type": "string", "minLength": 1 },
+        "mergeResultDigest": {
+          "type": ["string", "null"],
+          "description": "Evaluated merge-result digest (ADR-0017 §1). Null only when the forge capability to compute/pin it is absent, and then only alongside capabilityGap — never a silent widening of what was actually pinned."
+        },
+        "capabilityGap": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Present only when mergeResultDigest is null; documents which forge capability was absent (e.g. no merge-train/queue, ADR-0017 §1). Never present when mergeResultDigest was actually pinned."
+        },
+        "factsResolvedAt": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "format": "date-time" },
+          "description": "Keyed by provider name (ADR-0011 amendment, hermetic replay)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mergeResultDigest": { "type": "null" } } },
+          "then": { "required": ["capabilityGap"] },
+          "else": { "not": { "required": ["capabilityGap"] } }
+        }
+      ]
+    }
+  }
+}

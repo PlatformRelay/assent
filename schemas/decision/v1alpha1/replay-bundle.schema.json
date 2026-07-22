@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/decision/v1alpha1/replay-bundle.schema.json",
+  "title": "ReplayBundle",
+  "description": "Access-controlled canonical input for hermetic replay (ADR-0016 §3): the full unredacted EvaluationInput (every resolved fact carries its value, enforced by evaluation-input.schema.json's if/then) plus the same pins as the DecisionRecord it replays — no wall-clock or environment reference, only the pinned asOf/observedAt values already in-record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "pins", "evaluationInput"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "ReplayBundle" },
+    "pins": { "$ref": "https://assent.dev/schemas/decision/v1alpha1/decision-record.schema.json#/$defs/pins" },
+    "evaluationInput": { "$ref": "https://assent.dev/schemas/decision/v1alpha1/evaluation-input.schema.json" }
+  }
+}

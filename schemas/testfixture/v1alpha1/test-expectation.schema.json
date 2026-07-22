@@ -1,6 +1,114 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://assent.dev/schemas/testfixture/v1alpha1/test-expectation.schema.json",
-  "title": "TestExpectation (PLACEHOLDER — REQ-P3-E1-S05-01/02 not yet implemented)",
-  "type": "object"
+  "title": "TestExpectation",
+  "description": "ADR-0014's adopter test-fixture format: the expect.yaml shape (directory-case form, .assent/tests/<pack>/<case>/expect.yaml) and the cases.yaml inline-shorthand wrapper (.assent/tests/<pack>/cases.yaml) are one contract, not two — every cases[].expect reuses #/$defs/expectation verbatim. This is the format `assent test` (E6) and every shipped example pack (E9) validate against.",
+  "oneOf": [
+    { "$ref": "#/$defs/expectation" },
+    { "$ref": "#/$defs/casesFile" }
+  ],
+  "$defs": {
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision"],
+      "properties": {
+        "decision": { "enum": ["APPROVE", "REVIEW", "BLOCK"] },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/finding" },
+          "description": "Must-contain by default (each listed finding must fire, others may also fire); set the sibling `exact: true` for a closed list (ADR-0017 consequence: exact is the safety default for anyone opting in)."
+        },
+        "exact": {
+          "type": "boolean",
+          "default": true,
+          "description": "true: findings[] is the complete, closed list of findings the case must produce (ADR-0017 consequence — exact is the safety default). false/absent: must-contain semantics, other findings may also fire."
+        },
+        "absent": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Rule names that must NOT fire for this case."
+        },
+        "score": { "$ref": "#/$defs/score" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "effect"],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "description": "References a MergePolicy rules[].name (S01)."
+        },
+        "obligation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Present only when this finding corresponds to an obligation-proving rule's prove.obligation (MergePolicy, S01) — mirrors DecisionRecord finding.obligation (S02)."
+        },
+        "effect": {
+          "enum": ["comment", "challenge", "block", "require-review"],
+          "description": "The same closed effect vocabulary frozen by MergePolicy onFailure.effect (S01) and DecisionRecord/PresentationModel finding.effect (S02) — require-review is satisfied only by forge-proven ApprovalEvidence (S04), never a bare vouch or a resolved-discussion proxy (ADR-0017 §3). `effect: vouch` no longer exists in the vocabulary anywhere and is rejected here as an unknown enum value (retired, ADR-0017 consequences)."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JSON Pointer to the affected value — a structured safety assertion counted by `assent test --coverage`."
+        },
+        "message~": {
+          "type": "string",
+          "description": "Discouraged-for-safety substring/regex match on the rendered message (ADR-0014 amendment). This is a presentation-layer assertion: `assent test --coverage` counts only structured safety assertions (decision, rule, effect, findings[].path, score), never this field; rendered-output goldens belong to the presentation/render test layer (`assent render` fixtures against PresentationModel, ADR-0016 §4). Documentation note only, not a validation rule — the field stays schema-legal."
+        }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "threshold"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "threshold": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "casesFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cases"],
+      "properties": {
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/case" }
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "file", "base", "head", "expect"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path of the single file this inline case exercises."
+        },
+        "base": {
+          "description": "The file's content on the target branch, inline (any shape — the resource's own format, not a fixed contract field); null for a new-file case."
+        },
+        "head": {
+          "description": "The file's content as the MR proposes it, inline; null for a deleted-file case."
+        },
+        "facts": {
+          "type": "object",
+          "description": "Optional stubbed provider results, keyed by provider name (providers are never called in tests, ADR-0014)."
+        },
+        "expect": {
+          "$ref": "#/$defs/expectation",
+          "description": "Reuses the exact same expectation shape as the directory-case expect.yaml — single source of truth (REQ-P3-E1-S05-02)."
+        }
+      }
+    }
+  }
 }

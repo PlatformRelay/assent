@@ -232,54 +232,57 @@ Requirements:
 
 ## P3-E1-S04 — Typed `ApprovalEvidence` contract (OQ-23, D-017 B5)
 
-- **Goal**: freeze `ApprovalEvidence` as its own versioned schema — principal identity,
-  approval source/rule, self-approval policy, eligibility evidence, source+merge-result pins,
-  observation time+expiry, and the verifying forge capability — so `require-review`
-  (ADR-0017 §3) has one contract no forge adapter can bypass with a weaker proxy (like a
-  resolved discussion).
+- **Goal**: freeze `ApprovalEvidence` as its own versioned schema — per-rule forge threshold
+  (`approvalsRequired`), actual approvers (`approvedBy[]`), principal identity with required
+  `isAuthor`, approval source/rule, eligibility evidence, **canonical DecisionRecord pins**
+  (cross-file `$ref`), observation time (+ optional time-bound `expiresAt`), and the verifying
+  forge capability — so `require-review` (ADR-0017 §3) has one contract no forge adapter can
+  bypass with a weaker proxy (like a resolved discussion). Amended 2026-07-22 after roast
+  `inbox/reports/2026-07-22-roast-p3-e1-s04-approval-evidence.md` (P1-A/P1-B/P2-C).
 - **Operator input**: no.
-- **Dependencies**: P3-E1-S02 (embeds the same `pins` shape as `DecisionRecord`); reuses the
-  evidence chain already verified in `docs/planning/forge-dossier-gitlab.md` §4
-  (P1-E3-S02).
-- **Definition of done**: `schemas/approval/v1alpha1/approval-evidence.schema.json` committed; a
-  positive fixture built from the GitLab dossier's §4 evidence chain (`approval_rules` →
-  `eligible_approvers[]` → `approval_state.rules[].approved_by[]`) validates; two adversarial
-  fixtures (self-approval, missing capability) fail validation or force the documented
-  fail-closed field.
+- **Dependencies**: P3-E1-S02 (`pins` `$def` must exist to `$ref`); GitLab dossier §4
+  (`docs/planning/forge-dossier-gitlab.md`, P1-E3-S02).
+- **Definition of done**: `schemas/approval/v1alpha1/approval-evidence.schema.json` committed;
+  a multi-approval positive fixture (`approvalsRequired ≥ 2`, `approvedBy` length matching)
+  built from the dossier §4 chain validates; adversarial fixtures (omitted `isAuthor`, forked
+  subset pins, discussion `ruleType`, capability gap with evidence fields) fail as specified.
 
 Requirements:
 
 - **REQ-P3-E1-S04-01** — Given the GitLab dossier §4 evidence chain, when
-  `schemas/approval/v1alpha1/approval-evidence.schema.json` is authored, then it requires: `principal
-  {id, username}` (the approver's identity), `source {rule, ruleType: enum [regular,
-  code_owner, report_approver, any_approver]}` (which approval rule/CODEOWNERS entry proved
-  eligibility), `eligibility {eligibleApproverIds: array, minItems: 1}` (non-empty — a rule
-  auto-satisfied with an empty `approved_by` must never populate this), `pins {sourceSha,
-  targetSha, mergeResultDigest}` (reuses S02's pin shape — approval evidence is only valid for
-  the state it was observed against), `observedAt`, `expiresAt` (arming precondition,
-  ADR-0017 §4), and `verifyingCapability: enum [approval-rules-api, codeowners, none]`.
+  `schemas/approval/v1alpha1/approval-evidence.schema.json` is authored, then it requires (when
+  `verifyingCapability` ≠ `none`): `principal {id, username, isAuthor: const false}` (required
+  `isAuthor` — adapter must positively assert non-authorship; schema cannot verify against an
+  in-record author id), `source {rule, ruleType: enum [regular, code_owner, report_approver,
+  any_approver]}`, `eligibility {eligibleApproverIds: array, minItems: 1}`,
+  `approvalsRequired` (integer ≥ 1 — forge threshold, dossier step (a)), `approvedBy[]`
+  (minItems 1, each `{id, username, isAuthor: const false}` — actual approvers, dossier step
+  (c), distinct from eligibility), `pins` as a **cross-file `$ref`** to
+  `decision-record.schema.json#/$defs/pins` (one shape only — no forked subset),
+  `observedAt`, and `verifyingCapability: enum [approval-rules-api, codeowners, none]`.
+  `expiresAt` is **optional** (present only for genuine time-bounds; push-staleness uses
+  `pins.sourceSha`). No `approved_at` field — `pins.sourceSha` + `observedAt` subsume the
+  dossier's approved_at↔head pairing for v1alpha1. Adversarial: missing
+  `approvalsRequired`/`approvedBy`, forked subset pins, or omitted `isAuthor` fail validation.
   - Test: `schemas/approval/v1alpha1/approval-evidence.schema.json`
   - Verify: `go test ./schemas/... -run TestApprovalEvidenceSchema`
   - Level: L0
 - **REQ-P3-E1-S04-02** — Given ADR-0017 §3's "challenge is acknowledgement, not
   authorization", when the schema is authored, then it has **no field capable of being
   populated from a resolved-discussion/challenge-thread source** (`source.ruleType` is a
-  closed enum containing only forge approval-rule/CODEOWNERS kinds) and no field name overlaps
-  with the publication marker vocabulary (`slot`/`occurrence`, P3-E5) — structurally
-  preventing a future implementer from wiring `challenge` resolution into `require-review`
-  evidence, which was the exact bug ADR-0017 §3 fixes. Adversarial case: a fixture attempting
-  `source.ruleType: "discussion-resolved"` fails schema validation (value not in the enum).
+  closed enum containing only forge approval-rule/CODEOWNERS kinds) — structurally preventing
+  a future implementer from wiring `challenge` resolution into `require-review` evidence.
+  Adversarial case: a fixture attempting `source.ruleType: "discussion-resolved"` fails
+  schema validation (value not in the enum).
   - Test: `schemas/approval/v1alpha1/approval-evidence.schema.json`
   - Verify: `go test ./schemas/... -run TestApprovalEvidenceExcludesDiscussion`
   - Level: L0
 - **REQ-P3-E1-S04-03** — Given "missing capability → never auto-merge, no silent downgrade to
   challenge" (D-017 B5), when `verifyingCapability: "none"` is set, then the schema requires
-  `eligibility` and `principal` to be **absent** (via `if/then`, not merely empty) — the
-  schema makes "no evidence" and "evidence present but empty" structurally distinguishable, so
-  a `DecisionRecord` consuming this evidence can only represent the fail-closed outcome, never
-  a decision that silently treats an absent capability as a satisfied or downgraded
-  obligation. Adversarial case: `verifyingCapability: "none"` with a non-empty `eligibility`
-  fails validation.
+  `principal`, `source`, `eligibility`, `approvalsRequired`, and `approvedBy` to be
+  **absent** (via `if/then`, not merely empty) — so a `DecisionRecord` consuming this
+  evidence can only represent the fail-closed outcome. Adversarial case:
+  `verifyingCapability: "none"` with `approvedBy` present fails validation.
   - Test: `schemas/approval/v1alpha1/approval-evidence.schema.json`
   - Verify: `go test ./schemas/... -run TestApprovalEvidenceCapabilityGap`
   - Level: L0

@@ -2,17 +2,31 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://assent.dev/schemas/approval/v1alpha1/approval-evidence.schema.json",
   "title": "ApprovalEvidence",
-  "description": "Forge-proven eligible-approval evidence for a require-review obligation (ADR-0017 §3, OQ-23). This is the only contract require-review may be satisfied against — a resolved discussion/challenge thread is acknowledgement, not authorization, and has no representable path into this schema (GitLab dossier §4). Safety-bearing: unknown fields reject at every level (ADR-0017 §9).",
+  "description": "Forge-proven eligible-approval evidence for a require-review obligation (ADR-0017 §3, OQ-23). One record is per approval rule (dossier §4), carrying the forge threshold (approvalsRequired), the eligible set, and the actual approvers (approvedBy[]). This is the only contract require-review may be satisfied against — a resolved discussion/challenge thread is acknowledgement, not authorization, and has no representable path into this schema. Safety-bearing: unknown fields reject at every level (ADR-0017 §9). pins is a cross-file $ref to DecisionRecord.$defs.pins — one shape only (roast P1-B).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["apiVersion", "kind", "pins", "observedAt", "expiresAt", "verifyingCapability"],
+  "required": ["apiVersion", "kind", "pins", "observedAt", "verifyingCapability"],
   "properties": {
     "apiVersion": { "const": "assent.dev/v1alpha1" },
     "kind": { "const": "ApprovalEvidence" },
     "principal": { "$ref": "#/$defs/principal" },
     "source": { "$ref": "#/$defs/source" },
     "eligibility": { "$ref": "#/$defs/eligibility" },
-    "pins": { "$ref": "#/$defs/pins" },
+    "approvalsRequired": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Forge rule threshold (GitLab dossier §4 step (a): approval_rules[].approvals_required). Required when verifyingCapability is not none — a multi-approval require-review gate is otherwise unprovable (roast P1-A)."
+    },
+    "approvedBy": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/approver" },
+      "description": "Actual approvers for this rule (GitLab dossier §4 step (c): approval_state.rules[].approved_by[]). Distinct from the eligible set. Required when verifyingCapability is not none."
+    },
+    "pins": {
+      "$ref": "https://assent.dev/schemas/decision/v1alpha1/decision-record.schema.json#/$defs/pins",
+      "description": "Canonical DecisionRecord pins $def (cross-file $ref). Approval evidence is only valid for the exact source/target/merge-result/tool/policy state it was observed against (ADR-0017 §1). Push-staleness is gated by pins.sourceSha (dossier §4 Staleness); no separate approved_at field — pins.sourceSha + observedAt subsume the dossier pairing for v1alpha1."
+    },
     "observedAt": {
       "type": "string",
       "format": "date-time",
@@ -21,11 +35,11 @@
     "expiresAt": {
       "type": "string",
       "format": "date-time",
-      "description": "Arming precondition (ADR-0017 §4): evidence observed but expired by decision time is not valid approval."
+      "description": "Optional. Present only when a genuine time-bound applies (e.g. require_reauthentication). GitLab approvals are push-invalidated (reset_approvals_on_push), already captured by pins.sourceSha — do not invent a timestamp for push-staleness (roast P2-D)."
     },
     "verifyingCapability": {
       "enum": ["approval-rules-api", "codeowners", "none"],
-      "description": "The forge capability that proved this evidence. \"none\" is the documented capability-gap value (D-017 B5): missing capability must never auto-merge and must never silently downgrade to a challenge/thread proxy — it is representable only as the fail-closed shape enforced below, never as an ordinary (if empty) evidence record."
+      "description": "The forge capability that proved this evidence. \"none\" is the documented capability-gap value (D-017 B5): missing capability must never auto-merge and must never silently downgrade to a challenge/thread proxy — it is representable only as the fail-closed shape enforced below."
     }
   },
   "if": {
@@ -33,31 +47,46 @@
     "properties": { "verifyingCapability": { "const": "none" } }
   },
   "then": {
-    "description": "Capability gap: principal/source/eligibility must be structurally absent, not merely empty, so a DecisionRecord consuming this evidence can only represent fail-closed, never a satisfied or silently-downgraded obligation (D-017 B5, REQ-P3-E1-S04-03).",
+    "description": "Capability gap: principal/source/eligibility/approvalsRequired/approvedBy must be structurally absent so a DecisionRecord can only represent fail-closed (D-017 B5).",
     "properties": {
       "principal": false,
       "source": false,
-      "eligibility": false
+      "eligibility": false,
+      "approvalsRequired": false,
+      "approvedBy": false
     }
   },
   "else": {
-    "required": ["principal", "source", "eligibility"]
+    "required": ["principal", "source", "eligibility", "approvalsRequired", "approvedBy"]
   },
   "$defs": {
     "principal": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "username"],
+      "required": ["id", "username", "isAuthor"],
       "properties": {
         "id": {
           "type": "string",
           "minLength": 1,
-          "description": "Forge-stable approver identity (GitLab dossier §4: approved_by[].user.id)."
+          "description": "Forge-stable identity of the primary observed approver (GitLab dossier §4: approved_by[].user.id). Multi-approval satisfaction is expressed via approvedBy[] + approvalsRequired, not by omitting the threshold."
         },
         "username": { "type": "string", "minLength": 1 },
         "isAuthor": {
           "const": false,
-          "description": "Self-approval policy (ADR-0015 §5, GitLab dossier §4 'MR-author approval'): the approving principal can never be the change's author. The adapter must verify forge-side enforcement (e.g. merge_requests_author_approval: false) and independently exclude client-side (defense in depth, since the setting is overridable per-MR). Declaring isAuthor: true is not representable — a self-approval can never be encoded as valid evidence, whether or not the forge setting was actually enforced."
+          "description": "REQUIRED. Adapter must positively assert the principal is not the MR author (const false). Author/committer exclusion remains an adapter invariant the schema cannot verify against an in-record author id — omitting isAuthor is invalid so the check cannot be silently skipped (roast P2-C)."
+        }
+      }
+    },
+    "approver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "username", "isAuthor"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "username": { "type": "string", "minLength": 1 },
+        "isAuthor": {
+          "const": false,
+          "description": "REQUIRED on every actual approver entry. Same adapter-invariant honesty as principal.isAuthor (roast P2-C)."
         }
       }
     },
@@ -73,7 +102,7 @@
         },
         "ruleType": {
           "enum": ["regular", "code_owner", "report_approver", "any_approver"],
-          "description": "Closed set of forge approval-rule kinds (GitLab dossier §4, rules[].rule_type). Deliberately excludes any discussion/challenge-resolution kind: ADR-0017 §3 treats a resolved discussion as acknowledgement, never authorization, so there is no enum value a discussion resolver could ever populate this field with."
+          "description": "Closed set of forge approval-rule kinds (GitLab dossier §4, rules[].rule_type). Deliberately excludes any discussion/challenge-resolution kind: ADR-0017 §3 treats a resolved discussion as acknowledgement, never authorization."
         }
       }
     },
@@ -86,19 +115,8 @@
           "type": "array",
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Forge-proven eligible-approver set for source.rule (GitLab dossier §4 step (b), rules[].eligible_approvers[].id). Must never be populated from a rule GitLab auto-approved because it was impossible to satisfy (only eligible approver is the author; no eligible approvers; required > eligible) — dossier §4 'Invalid-rule pitfall': such a rule has approved: true with an empty/insufficient approved_by, and empty eligibility can never stand in for real evidence."
+          "description": "Forge-proven eligible-approver set for source.rule (GitLab dossier §4 step (b)). Must never be populated from a rule GitLab auto-approved because it was impossible to satisfy — dossier §4 invalid-rule pitfall."
         }
-      }
-    },
-    "pins": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["sourceSha", "targetSha", "mergeResultDigest"],
-      "description": "Reuses DecisionRecord's pin shape (P3-E1-S02): approval evidence is only valid for the exact source/target/merge-result state it was observed against, never a movable ref (ADR-0017 §1). Pairs with observedAt/expiresAt against dossier §4 'Staleness' — approvals reset on new push, so a pinned sourceSha that predates the current head is stale evidence, not valid evidence.",
-      "properties": {
-        "sourceSha": { "type": "string", "minLength": 1 },
-        "targetSha": { "type": "string", "minLength": 1 },
-        "mergeResultDigest": { "type": "string", "minLength": 1 }
       }
     }
   }

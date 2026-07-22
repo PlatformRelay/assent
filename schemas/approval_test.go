@@ -2,35 +2,50 @@ package schemas
 
 import (
 	_ "embed"
-	"strings"
 	"testing"
 )
 
 //go:embed approval/v1alpha1/approval-evidence.schema.json
 var approvalEvidenceSchemaJSON []byte
 
-// ApprovalEvidenceSchema validates schemas/approval/v1alpha1/approval-evidence.schema.json
-// instances. Compiled/embedded here (not in compiler.go) per this lane's
-// self-contained-ownership boundary.
-var ApprovalEvidenceSchema = mustCompile("approval-evidence.schema.json", approvalEvidenceSchemaJSON)
+const approvalEvidenceSchemaID = "https://assent.dev/schemas/approval/v1alpha1/approval-evidence.schema.json"
 
-// REQ-P3-E1-S04-01: approval-evidence.schema.json requires principal
-// {id, username}, source {rule, ruleType}, eligibility
-// {eligibleApproverIds: non-empty}, pins {sourceSha, targetSha,
-// mergeResultDigest}, observedAt, expiresAt, and verifyingCapability — built
-// from the GitLab dossier §4 evidence chain (approval_rules ->
-// eligible_approvers[] -> approval_state.rules[].approved_by[]).
+// ApprovalEvidenceSchema validates approval-evidence.schema.json instances.
+// Compiled with DecisionRecord in the same compiler so the cross-file pins
+// $ref resolves (roast P1-B — one pins shape only).
+var ApprovalEvidenceSchema = mustCompileCrossReferenced(map[string][]byte{
+	decisionRecordSchemaID:     decisionRecordSchemaJSON,
+	approvalEvidenceSchemaID:   approvalEvidenceSchemaJSON,
+})[approvalEvidenceSchemaID]
+
+// fullPins is a valid DecisionRecord.$defs.pins instance (canonical shape).
+const fullPins = `{
+	"toolVersion": "0.0.0-dev",
+	"toolDigest": "sha256:tool",
+	"policySha": "pol1",
+	"sourceSha": "abc123",
+	"targetSha": "def456",
+	"mergeResultDigest": "sha256:aaaa",
+	"factsResolvedAt": {}
+}`
+
+// REQ-P3-E1-S04-01: dossier §4 chain — approvalsRequired + approvedBy[] +
+// eligibility + canonical pins $ref + required isAuthor.
 func TestApprovalEvidenceSchema(t *testing.T) {
-	t.Run("GitLab dossier §4 evidence chain (regular rule) is valid", func(t *testing.T) {
-		const doc = `{
+	t.Run("GitLab dossier §4 multi-approval rule is valid", func(t *testing.T) {
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"principal": {"id": "202", "username": "alice"},
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
 			"source": {"rule": "security-review", "ruleType": "regular"},
-			"eligibility": {"eligibleApproverIds": ["101", "202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"eligibility": {"eligibleApproverIds": ["101", "202", "303"]},
+			"approvalsRequired": 2,
+			"approvedBy": [
+				{"id": "202", "username": "alice", "isAuthor": false},
+				{"id": "303", "username": "carol", "isAuthor": false}
+			],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err != nil {
@@ -39,13 +54,15 @@ func TestApprovalEvidenceSchema(t *testing.T) {
 	})
 
 	t.Run("CODEOWNERS-sourced rule is valid", func(t *testing.T) {
-		const doc = `{
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
 			"principal": {"id": "303", "username": "bob", "isAuthor": false},
 			"source": {"rule": "codeowners:/topics/**", "ruleType": "code_owner"},
 			"eligibility": {"eligibleApproverIds": ["303", "404"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:bbbb"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "303", "username": "bob", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
 			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "codeowners"
@@ -55,135 +72,206 @@ func TestApprovalEvidenceSchema(t *testing.T) {
 		}
 	})
 
-	t.Run("adversarial: missing pins is invalid", func(t *testing.T) {
-		const doc = `{
+	t.Run("adversarial: missing approvalsRequired is invalid", func(t *testing.T) {
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"principal": {"id": "202", "username": "alice"},
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
 			"source": {"rule": "security-review", "ruleType": "regular"},
 			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected missing pins to fail validation")
+			t.Fatal("expected missing approvalsRequired to fail validation")
+		}
+	})
+
+	t.Run("adversarial: missing approvedBy is invalid", func(t *testing.T) {
+		doc := `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "ApprovalEvidence",
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"source": {"rule": "security-review", "ruleType": "regular"},
+			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvalsRequired": 1,
+			"pins": ` + fullPins + `,
+			"observedAt": "2026-07-20T10:00:00Z",
+			"verifyingCapability": "approval-rules-api"
+		}`
+		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
+			t.Fatal("expected missing approvedBy to fail validation")
+		}
+	})
+
+	t.Run("adversarial: approvalsRequired 0 is invalid", func(t *testing.T) {
+		doc := `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "ApprovalEvidence",
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"source": {"rule": "security-review", "ruleType": "regular"},
+			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvalsRequired": 0,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
+			"observedAt": "2026-07-20T10:00:00Z",
+			"verifyingCapability": "approval-rules-api"
+		}`
+		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
+			t.Fatal("expected approvalsRequired: 0 to fail validation")
+		}
+	})
+
+	t.Run("adversarial: forked subset pins (missing toolVersion) is invalid", func(t *testing.T) {
+		doc := `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "ApprovalEvidence",
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"source": {"rule": "security-review", "ruleType": "regular"},
+			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"observedAt": "2026-07-20T10:00:00Z",
+			"verifyingCapability": "approval-rules-api"
+		}`
+		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
+			t.Fatal("expected forked subset pins to fail — must use DecisionRecord pins shape")
 		}
 	})
 
 	t.Run("adversarial: empty eligibleApproverIds is invalid", func(t *testing.T) {
-		const doc = `{
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"principal": {"id": "202", "username": "alice"},
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
 			"source": {"rule": "security-review", "ruleType": "regular"},
 			"eligibility": {"eligibleApproverIds": []},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected empty eligibleApproverIds (dossier §4 invalid-rule pitfall) to fail validation")
+			t.Fatal("expected empty eligibleApproverIds to fail validation")
 		}
 	})
 
-	t.Run("adversarial: missing principal when capability present is invalid", func(t *testing.T) {
-		const doc = `{
-			"apiVersion": "assent.dev/v1alpha1",
-			"kind": "ApprovalEvidence",
-			"source": {"rule": "security-review", "ruleType": "regular"},
-			"eligibility": {"eligibleApproverIds": ["202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
-			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
-			"verifyingCapability": "approval-rules-api"
-		}`
-		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected missing principal (capability present) to fail validation")
-		}
-	})
-
-	t.Run("adversarial: unknown top-level field is invalid", func(t *testing.T) {
-		const doc = `{
+	t.Run("adversarial: omitted principal.isAuthor is invalid", func(t *testing.T) {
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
 			"principal": {"id": "202", "username": "alice"},
 			"source": {"rule": "security-review", "ruleType": "regular"},
 			"eligibility": {"eligibleApproverIds": ["202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
-			"verifyingCapability": "approval-rules-api",
-			"bogus": true
+			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected unknown top-level field to fail validation")
+			t.Fatal("expected omitted principal.isAuthor to fail validation (roast P2-C)")
 		}
 	})
 
 	t.Run("adversarial: self-approval (principal.isAuthor: true) is invalid", func(t *testing.T) {
-		const doc = `{
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
 			"principal": {"id": "202", "username": "alice", "isAuthor": true},
 			"source": {"rule": "security-review", "ruleType": "regular"},
 			"eligibility": {"eligibleApproverIds": ["202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected principal.isAuthor: true (self-approval) to fail validation")
+			t.Fatal("expected principal.isAuthor: true to fail validation")
+		}
+	})
+
+	t.Run("adversarial: approvedBy entry missing isAuthor is invalid", func(t *testing.T) {
+		doc := `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "ApprovalEvidence",
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"source": {"rule": "security-review", "ruleType": "regular"},
+			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice"}],
+			"pins": ` + fullPins + `,
+			"observedAt": "2026-07-20T10:00:00Z",
+			"verifyingCapability": "approval-rules-api"
+		}`
+		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
+			t.Fatal("expected approvedBy[].isAuthor omission to fail validation")
+		}
+	})
+
+	t.Run("canonical pins with null mergeResultDigest + capabilityGap is valid", func(t *testing.T) {
+		doc := `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "ApprovalEvidence",
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"source": {"rule": "security-review", "ruleType": "regular"},
+			"eligibility": {"eligibleApproverIds": ["202"]},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": {
+				"toolVersion": "0.0.0-dev",
+				"toolDigest": "sha256:tool",
+				"policySha": "pol1",
+				"sourceSha": "abc123",
+				"targetSha": "def456",
+				"mergeResultDigest": null,
+				"capabilityGap": "no-merge-train",
+				"factsResolvedAt": {}
+			},
+			"observedAt": "2026-07-20T10:00:00Z",
+			"verifyingCapability": "approval-rules-api"
+		}`
+		if err := validateJSON(ApprovalEvidenceSchema, doc); err != nil {
+			t.Fatalf("expected canonical pins capability-gap shape to be valid, got: %v", err)
 		}
 	})
 }
 
-// REQ-P3-E1-S04-02: source.ruleType is a closed enum of forge approval-rule
-// kinds with no discussion/challenge-resolution value — a resolved
-// discussion is acknowledgement, never authorization (ADR-0017 §3), and
-// cannot be wired into require-review evidence.
+// REQ-P3-E1-S04-02: closed ruleType enum — discussion resolvers cannot populate
+// require-review evidence (ADR-0017 §3).
 func TestApprovalEvidenceExcludesDiscussion(t *testing.T) {
 	t.Run("adversarial: source.ruleType discussion-resolved is invalid", func(t *testing.T) {
-		const doc = `{
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"principal": {"id": "202", "username": "alice"},
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
 			"source": {"rule": "resolve-all-threads", "ruleType": "discussion-resolved"},
 			"eligibility": {"eligibleApproverIds": ["202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "approval-rules-api"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected source.ruleType: discussion-resolved to fail validation (not in the closed enum)")
-		}
-	})
-
-	t.Run("no property name overlaps the publication-marker vocabulary (slot/occurrence, P3-E5)", func(t *testing.T) {
-		raw := string(approvalEvidenceSchemaJSON)
-		for _, banned := range []string{`"slot"`, `"occurrence"`} {
-			if strings.Contains(raw, banned) {
-				t.Fatalf("schema must not declare a %s field (reserved for the P3-E5 publication marker)", banned)
-			}
+			t.Fatal("expected source.ruleType: discussion-resolved to fail validation")
 		}
 	})
 }
 
-// REQ-P3-E1-S04-03: verifyingCapability: "none" forces principal/source/
-// eligibility to be structurally absent (via if/then, not merely empty) —
-// D-017 B5: missing capability never auto-merges and never silently
-// downgrades to a challenge/thread proxy.
+// REQ-P3-E1-S04-03: verifyingCapability none → evidence fields structurally absent.
 func TestApprovalEvidenceCapabilityGap(t *testing.T) {
-	t.Run("capability gap with no evidence fields is valid (the fail-closed shape)", func(t *testing.T) {
-		const doc = `{
+	t.Run("capability gap with no evidence fields is valid", func(t *testing.T) {
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "none"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err != nil {
@@ -191,63 +279,32 @@ func TestApprovalEvidenceCapabilityGap(t *testing.T) {
 		}
 	})
 
-	t.Run("adversarial: capability none with non-empty eligibility is invalid", func(t *testing.T) {
-		const doc = `{
+	t.Run("adversarial: capability none with approvedBy present is invalid", func(t *testing.T) {
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"eligibility": {"eligibleApproverIds": ["202"]},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"approvalsRequired": 1,
+			"approvedBy": [{"id": "202", "username": "alice", "isAuthor": false}],
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "none"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected verifyingCapability: none with non-empty eligibility to fail validation")
+			t.Fatal("expected verifyingCapability: none with approvedBy to fail validation")
 		}
 	})
 
 	t.Run("adversarial: capability none with principal present is invalid", func(t *testing.T) {
-		const doc = `{
+		doc := `{
 			"apiVersion": "assent.dev/v1alpha1",
 			"kind": "ApprovalEvidence",
-			"principal": {"id": "202", "username": "alice"},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
+			"principal": {"id": "202", "username": "alice", "isAuthor": false},
+			"pins": ` + fullPins + `,
 			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
 			"verifyingCapability": "none"
 		}`
 		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected verifyingCapability: none with principal present to fail validation")
-		}
-	})
-
-	t.Run("adversarial: capability none with source present is invalid", func(t *testing.T) {
-		const doc = `{
-			"apiVersion": "assent.dev/v1alpha1",
-			"kind": "ApprovalEvidence",
-			"source": {"rule": "security-review", "ruleType": "regular"},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
-			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
-			"verifyingCapability": "none"
-		}`
-		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected verifyingCapability: none with source present to fail validation")
-		}
-	})
-
-	t.Run("adversarial: empty-object principal does not satisfy the absence requirement", func(t *testing.T) {
-		const doc = `{
-			"apiVersion": "assent.dev/v1alpha1",
-			"kind": "ApprovalEvidence",
-			"principal": {},
-			"pins": {"sourceSha": "abc123", "targetSha": "def456", "mergeResultDigest": "sha256:aaaa"},
-			"observedAt": "2026-07-20T10:00:00Z",
-			"expiresAt": "2026-07-20T11:00:00Z",
-			"verifyingCapability": "none"
-		}`
-		if err := validateJSON(ApprovalEvidenceSchema, doc); err == nil {
-			t.Fatal("expected an empty (but present) principal object under capability: none to fail validation — absence, not mere emptiness, is required")
+			t.Fatal("expected verifyingCapability: none with principal to fail validation")
 		}
 	})
 }

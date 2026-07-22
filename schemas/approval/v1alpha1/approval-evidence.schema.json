@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/approval/v1alpha1/approval-evidence.schema.json",
+  "title": "ApprovalEvidence (PLACEHOLDER — REQ-P3-E1-S04-01..03 not yet implemented)",
+  "type": "object"
+}

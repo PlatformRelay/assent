@@ -1,6 +1,105 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://assent.dev/schemas/approval/v1alpha1/approval-evidence.schema.json",
-  "title": "ApprovalEvidence (PLACEHOLDER — REQ-P3-E1-S04-01..03 not yet implemented)",
-  "type": "object"
+  "title": "ApprovalEvidence",
+  "description": "Forge-proven eligible-approval evidence for a require-review obligation (ADR-0017 §3, OQ-23). This is the only contract require-review may be satisfied against — a resolved discussion/challenge thread is acknowledgement, not authorization, and has no representable path into this schema (GitLab dossier §4). Safety-bearing: unknown fields reject at every level (ADR-0017 §9).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "pins", "observedAt", "expiresAt", "verifyingCapability"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "ApprovalEvidence" },
+    "principal": { "$ref": "#/$defs/principal" },
+    "source": { "$ref": "#/$defs/source" },
+    "eligibility": { "$ref": "#/$defs/eligibility" },
+    "pins": { "$ref": "#/$defs/pins" },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this evidence was fetched from the forge."
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Arming precondition (ADR-0017 §4): evidence observed but expired by decision time is not valid approval."
+    },
+    "verifyingCapability": {
+      "enum": ["approval-rules-api", "codeowners", "none"],
+      "description": "The forge capability that proved this evidence. \"none\" is the documented capability-gap value (D-017 B5): missing capability must never auto-merge and must never silently downgrade to a challenge/thread proxy — it is representable only as the fail-closed shape enforced below, never as an ordinary (if empty) evidence record."
+    }
+  },
+  "if": {
+    "required": ["verifyingCapability"],
+    "properties": { "verifyingCapability": { "const": "none" } }
+  },
+  "then": {
+    "description": "Capability gap: principal/source/eligibility must be structurally absent, not merely empty, so a DecisionRecord consuming this evidence can only represent fail-closed, never a satisfied or silently-downgraded obligation (D-017 B5, REQ-P3-E1-S04-03).",
+    "properties": {
+      "principal": false,
+      "source": false,
+      "eligibility": false
+    }
+  },
+  "else": {
+    "required": ["principal", "source", "eligibility"]
+  },
+  "$defs": {
+    "principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "username"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Forge-stable approver identity (GitLab dossier §4: approved_by[].user.id)."
+        },
+        "username": { "type": "string", "minLength": 1 },
+        "isAuthor": {
+          "const": false,
+          "description": "Self-approval policy (ADR-0015 §5, GitLab dossier §4 'MR-author approval'): the approving principal can never be the change's author. The adapter must verify forge-side enforcement (e.g. merge_requests_author_approval: false) and independently exclude client-side (defense in depth, since the setting is overridable per-MR). Declaring isAuthor: true is not representable — a self-approval can never be encoded as valid evidence, whether or not the forge setting was actually enforced."
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "ruleType"],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The approval rule name or CODEOWNERS entry that proved eligibility (GitLab dossier §4 step (a))."
+        },
+        "ruleType": {
+          "enum": ["regular", "code_owner", "report_approver", "any_approver"],
+          "description": "Closed set of forge approval-rule kinds (GitLab dossier §4, rules[].rule_type). Deliberately excludes any discussion/challenge-resolution kind: ADR-0017 §3 treats a resolved discussion as acknowledgement, never authorization, so there is no enum value a discussion resolver could ever populate this field with."
+        }
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligibleApproverIds"],
+      "properties": {
+        "eligibleApproverIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Forge-proven eligible-approver set for source.rule (GitLab dossier §4 step (b), rules[].eligible_approvers[].id). Must never be populated from a rule GitLab auto-approved because it was impossible to satisfy (only eligible approver is the author; no eligible approvers; required > eligible) — dossier §4 'Invalid-rule pitfall': such a rule has approved: true with an empty/insufficient approved_by, and empty eligibility can never stand in for real evidence."
+        }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceSha", "targetSha", "mergeResultDigest"],
+      "description": "Reuses DecisionRecord's pin shape (P3-E1-S02): approval evidence is only valid for the exact source/target/merge-result state it was observed against, never a movable ref (ADR-0017 §1). Pairs with observedAt/expiresAt against dossier §4 'Staleness' — approvals reset on new push, so a pinned sourceSha that predates the current head is stale evidence, not valid evidence.",
+      "properties": {
+        "sourceSha": { "type": "string", "minLength": 1 },
+        "targetSha": { "type": "string", "minLength": 1 },
+        "mergeResultDigest": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
 }

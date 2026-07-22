@@ -1,0 +1,87 @@
+# Fixture: crash-then-rerun (P3-E5-S02, REQ-P3-E5-S02-04).
+#
+# Scope: a run that crashes after step 3 (creating some artifacts) but before step 9 (the
+# post-publication rescan). Run 2 first lists existing bot-authored artifacts (step 2) and
+# therefore creates nothing new for slots already covered by run 1's partial work — matching
+# P4-E1's "crash-then-rerun produce[s] zero duplicate comments/threads". Vocabulary is frozen in
+# ../marker-grammar.md; the numbered protocol and state-table rows referenced below are frozen
+# in ../reconciliation-state-table.md.
+#
+# This is a documentation fixture (Level: doc) — it is illustrative, not schema-validated; no
+# reconciliation engine exists yet (Phase 5). It exists so P4-E1's walking-skeleton
+# implementation has a precise before/after shape to assert against.
+
+fixture: crash-then-rerun
+mr:
+  project: platform/orders-service
+  iid: "551"
+
+run1:
+  desiredReviewState:
+    slots:
+      - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:payments.events.v1", effect: challenge }
+        occurrence: "sha256:aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111"
+      - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:payments.events.v1", effect: comment }
+        occurrence: "sha256:bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222"
+  stepsExecutedBeforeCrash: [1, 2, 3]
+  # Run 1 crashes mid-publication: it created the summary comment (step 3) and one finding
+  # thread, then the process died (OOM-killed CI runner) before creating the second finding
+  # thread and before reaching step 9's rescan.
+  artifactsCreatedBeforeCrash:
+    - kind: summary-comment
+      forgeId: "note/7000"
+    - kind: finding-thread
+      slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:payments.events.v1", effect: challenge }
+      occurrence: "sha256:aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111"
+      forgeId: "note/7001"
+      resolved: false
+  crash:
+    afterStep: 3
+    beforeStep: 9
+    cause: "CI runner OOM-killed mid-publication"
+  # No artifact exists yet for the second slot (ownership/entry-owner-required) — run 1 never
+  # reached it — and step 9's rescan never ran, so run 1 never confirmed or denied success.
+  reportedSuccess: false
+
+run2:
+  desiredReviewState:
+    slots:
+      - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:payments.events.v1", effect: challenge }
+        occurrence: "sha256:aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111"
+      - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:payments.events.v1", effect: comment }
+        occurrence: "sha256:bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222"
+  # Step 2: run 2 lists existing bot-authored artifacts BEFORE creating anything — this is what
+  # makes the crash recoverable without duplication.
+  step2ExistingArtifacts:
+    - forgeId: "note/7000"
+      kind: summary-comment
+    - forgeId: "note/7001"
+      slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:payments.events.v1", effect: challenge }
+      occurrence: "sha256:aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111"
+      resolved: false
+  stateTableRowsHit:
+    - row: 2 # artifact matches current occurrence, unresolved -> leave-untouched (step 4)
+      forgeId: "note/7001"
+      action: leave-untouched
+    - row: 1 # no artifact exists for this slot -> create (step 3/6-adjacent create path)
+      slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:payments.events.v1", effect: comment }
+      action: create
+  artifactsCreated:
+    - kind: finding-thread
+      slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:payments.events.v1", effect: comment }
+      occurrence: "sha256:bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222"
+      forgeId: "note/7002"
+      resolved: false
+  summaryUpdated: true # step 3 edits note/7000 in place — never re-posts a second summary
+  postRunRescan:
+    matchesDesiredReviewState: true
+  reportedSuccess: true # only after the step-9 rescan run 1 never reached
+
+expected:
+  newArtifactsCreated: 1 # exactly one — the slot run 1 never got to before crashing
+  duplicateSlotOccupancy: 0 # zero duplicate comments/threads for the slot run 1 partially covered
+  duplicateSummaryComments: 0 # note/7000 is reused, never re-posted
+  invariant: >-
+    A crash-then-rerun produces zero duplicate comments/threads: step 2's listing on the rerun
+    discovers exactly what run 1's partial work left behind, so the rerun only fills the gap
+    (the slot run 1 never reached) instead of recreating what already exists.

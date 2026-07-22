@@ -1,0 +1,87 @@
+# Fixture: rerun idempotence (P3-E5-S02, REQ-P3-E5-S02-03).
+#
+# Scope: a DesiredReviewState computed identically twice in a row — a plain rerun with no
+# source change between run 1 and run 2 (no new commit, no target-branch move, no policy
+# change). This is the fixture shape P4-E1's exit gate cites for "a rerun ... produce[s] zero
+# duplicate comments/threads". Vocabulary (slot/occurrence/decision/artifact) is frozen in
+# ../marker-grammar.md; the numbered protocol and state-table rows referenced below are frozen
+# in ../reconciliation-state-table.md.
+#
+# This is a documentation fixture (Level: doc) — it is illustrative, not schema-validated; no
+# reconciliation engine exists yet (Phase 5). It exists so P4-E1's walking-skeleton
+# implementation has a precise before/after shape to assert against.
+
+fixture: rerun-idempotence
+mr:
+  project: platform/orders-service
+  iid: "482"
+
+run1:
+  desiredReviewState:
+    slots:
+      - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
+        occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
+      - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
+        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+  stepsExecuted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  artifactsCreated:
+    - kind: finding-thread
+      slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
+      occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
+      forgeId: "note/9001"
+      resolved: false
+    - kind: finding-thread
+      slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
+      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+      forgeId: "note/9002"
+      resolved: false
+    - kind: summary-comment
+      forgeId: "note/9000"
+  postRunRescan:
+    matchesDesiredReviewState: true
+
+# Between run 1 and run 2: no commit, no target-branch move, no policy change — the same
+# EvaluationInput re-evaluated produces byte-identical DesiredReviewState (determinism, ADR-0011
+# invariant). A reviewer separately resolves note/9001's thread via the forge UI (unrelated to
+# reconciliation; this is what run 2's "matches current occurrence, resolved" branch exercises).
+
+between:
+  reviewerAction: "resolves note/9001 (the challenge thread) via the forge thread-resolution API"
+
+run2:
+  desiredReviewState:
+    slots:
+      - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
+        occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
+      - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
+        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+  step2ExistingArtifacts:
+    - forgeId: "note/9001"
+      slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
+      occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
+      resolved: true
+    - forgeId: "note/9002"
+      slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
+      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+      resolved: false
+    - forgeId: "note/9000"
+      kind: summary-comment
+  stateTableRowsHit:
+    - row: 3 # artifact matches current occurrence, resolved -> preserve-resolution (step 5)
+      forgeId: "note/9001"
+      action: preserve-resolution
+    - row: 2 # artifact matches current occurrence, unresolved -> leave-untouched (step 4)
+      forgeId: "note/9002"
+      action: leave-untouched
+  artifactsCreated: [] # zero — every slot already has exactly one matching artifact
+  summaryUpdated: true # step 3 always updates the one summary slot in place, never re-posts it
+  postRunRescan:
+    matchesDesiredReviewState: true
+
+expected:
+  newArtifactsCreated: 0 # zero new artifacts on rerun
+  duplicateSlotOccupancy: 0 # zero duplicate slot occupancy — every slot still has exactly one artifact
+  invariant: >-
+    A rerun with an unchanged DesiredReviewState produces zero new artifacts and zero duplicate
+    comments/threads, regardless of reviewer actions taken between runs (resolving a thread is
+    read by step 5, never re-derived or overridden).

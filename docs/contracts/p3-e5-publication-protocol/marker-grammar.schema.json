@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/publication/v1alpha1/marker-grammar.schema.json",
+  "title": "PublicationMarker",
+  "description": "Hidden-HTML marker payload embedded in bot-authored forge comments/threads (ADR-0011 amendment 2 UpsertComment/SyncThreads, ADR-0012 amendment 2 finding-lifecycle state machine, ADR-0016 §1 renderer-owned marker region, D-007). Correlation metadata only: matches a forge artifact to the slot/occurrence/decision that produced it. Never decision input or authorization evidence (docs/contracts/p3-e5-publication-protocol/marker-grammar.md). Every property below is a bounded enum, hash, or length-capped ID string — there is no free-form/arbitrary-width string field, so a marker structurally cannot carry a secret, a fact value, user-controlled Markdown, or a raw policy expression.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slot", "occurrence", "decision", "artifact"],
+  "properties": {
+    "slot": { "$ref": "#/$defs/slot" },
+    "occurrence": { "$ref": "#/$defs/hash" },
+    "decision": { "$ref": "#/$defs/hash" },
+    "artifact": { "$ref": "#/$defs/artifact" }
+  },
+  "$defs": {
+    "idString": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,254}$",
+      "description": "Bounded (<=255 chars), safe-charset identifier — no whitespace, Markdown, or template metacharacters. Cannot carry a secret, a fact value, or free-form prose."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Opaque sha256 content digest. A hash of the referenced content, never the content itself."
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "mr", "rule", "effect"],
+      "description": "Stable identity from canonical fields only (ADR-0012 amendment 2 finding-key, generalized to governed subjects per ADR-0017 §5). Two markers describe the same slot iff every present field below is equal — this is what makes upsert-in-place and stale-occurrence supersession well-defined (see marker-grammar.md).",
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/idString",
+          "description": "Forge-stable project identity (e.g. GitLab project path or numeric id)."
+        },
+        "mr": {
+          "$ref": "#/$defs/idString",
+          "description": "Forge-stable MR/PR IID within the project."
+        },
+        "rule": {
+          "$ref": "#/$defs/idString",
+          "description": "Rule id that produced this finding (ADR-0007)."
+        },
+        "obligation": {
+          "$ref": "#/$defs/idString",
+          "description": "Named obligation this rule proves (ADR-0017 §2, `prove: {obligation, when}`). Present only when the rule is obligation-proving; absent for a non-obligation effect — never an empty string standing in for \"none\"."
+        },
+        "entryRef": {
+          "$ref": "#/$defs/idString",
+          "description": "Stable governed-subject identity (ADR-0017 §5 EntryRef), e.g. \"topic-registry:orders.events.v1\". Absent for MR-scope findings that have no single governed subject."
+        },
+        "effect": {
+          "enum": ["comment", "challenge", "block", "require-review"],
+          "description": "The rule effect this marker correlates to (ADR-0007). require-review markers correlate to ApprovalEvidence lookups only — never authorization evidence themselves (see non-goals in marker-grammar.md)."
+        },
+        "anchor": {
+          "$ref": "#/$defs/idString",
+          "description": "Optional file+line/column span id the finding is anchored to (ADR-0011 amendment 2 Positions). Absent for findings with no single inline anchor."
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion"],
+      "description": "The kind of forge artifact carrying this marker, and the marker grammar's own schema version — distinct from the DecisionRecord/PresentationModel/PublicationReceipt schema versions those artifacts may separately embed.",
+      "properties": {
+        "kind": {
+          "enum": ["finding-thread", "summary-comment"],
+          "description": "finding-thread: one resolvable thread per slot (ADR-0012 default layout). summary-comment: the one per-MR summary, edited in place, never re-posted (ADR-0012 amendment 2)."
+        },
+        "schemaVersion": {
+          "const": "v1alpha1",
+          "description": "Version of this marker grammar. A future incompatible grammar change ships as v1beta1/v2 side-by-side, never a silent reinterpretation of an existing marker."
+        }
+      }
+    }
+  }
+}

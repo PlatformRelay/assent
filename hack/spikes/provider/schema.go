@@ -1,46 +1,17 @@
 package provider
 
-import (
-	"bytes"
-	_ "embed"
-	"fmt"
+import "github.com/PlatformRelay/assent/schemas"
 
-	"github.com/santhosh-tekuri/jsonschema/v6"
-)
+// request.schema.json/response.schema.json were promoted unchanged to
+// schemas/provider/v1alpha1/ (REQ-P3-E1-S03-01). Go's //go:embed forbids
+// ".." patterns (embed.FS can't address a parent directory), so this
+// throwaway spike package delegates to the promoted schemas package's
+// exported validators instead of embedding the files itself — the public
+// ValidateRequest/ValidateResponse surface this package's tests already
+// depend on is unchanged.
 
-//go:embed request.schema.json
-var requestSchemaJSON []byte
+// ValidateRequest checks raw JSON against the promoted request.schema.json.
+func ValidateRequest(raw []byte) error { return schemas.ValidateProviderRequest(raw) }
 
-//go:embed response.schema.json
-var responseSchemaJSON []byte
-
-var (
-	requestSchema  = mustCompile("request.schema.json", requestSchemaJSON)
-	responseSchema = mustCompile("response.schema.json", responseSchemaJSON)
-)
-
-func mustCompile(name string, data []byte) *jsonschema.Schema {
-	doc, err := jsonschema.UnmarshalJSON(bytes.NewReader(data))
-	if err != nil {
-		panic(fmt.Sprintf("parse %s: %v", name, err))
-	}
-	c := jsonschema.NewCompiler()
-	if err := c.AddResource(name, doc); err != nil {
-		panic(fmt.Sprintf("add %s: %v", name, err))
-	}
-	return c.MustCompile(name)
-}
-
-// ValidateRequest checks raw JSON against request.schema.json.
-func ValidateRequest(raw []byte) error { return validateAgainst(requestSchema, raw) }
-
-// ValidateResponse checks raw JSON against response.schema.json.
-func ValidateResponse(raw []byte) error { return validateAgainst(responseSchema, raw) }
-
-func validateAgainst(s *jsonschema.Schema, raw []byte) error {
-	doc, err := jsonschema.UnmarshalJSON(bytes.NewReader(raw))
-	if err != nil {
-		return fmt.Errorf("not JSON: %w", err)
-	}
-	return s.Validate(doc)
-}
+// ValidateResponse checks raw JSON against the promoted response.schema.json.
+func ValidateResponse(raw []byte) error { return schemas.ValidateProviderResponse(raw) }

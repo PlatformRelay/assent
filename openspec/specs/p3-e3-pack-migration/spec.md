@@ -110,17 +110,26 @@ Requirements:
   - Verify: `! grep -rqi "DRAFT" examples/policies examples/archetypes && ! grep -rq "rule_intent" examples/archetypes`
   - Level: doc
 - **REQ-P3-E3-S01-04** — Given `examples/archetypes/no-destruction/expected.yaml`'s current
-  `onFailure: {effect: require-review, code: destruction.forbidden}` sitting alongside its
-  delete/rename/near-similarity case index, when migrated, then the file **keeps**
-  `require-review` (per the flagged gap above — this is the second archetype the same fix
-  applies to, not a one-off) rather than being silently downgraded to `block`; the case
-  index's own `path:` keys (case-directory names — `delete/`, `rename/`, `near-similarity/` —
-  unrelated to the ADR-0017 §5 matcher-domain overload, which only governs a rule's `match:`
-  block) are left untouched with a comment clarifying the distinction; and the ADR-0003
-  "rename never laxer than delete" invariant plus the near-similarity adversarial case
-  (`max(strictness(delete), strictness(rename))`) are preserved verbatim.
+  `# DRAFT — pre-schema` header and its `onFailure: {effect: require-review, code:
+  destruction.forbidden}` sitting alongside its delete/rename/near-similarity case index, when
+  migrated, then: the DRAFT header is removed from **this file specifically** (not merely
+  asserted repo-wide by S01-03 — this REQ's own Verify checks this file by name so a partial
+  migration that skips it cannot pass); the file **keeps** `require-review` (per the flagged
+  gap above — this is the second archetype the same fix applies to, not a one-off) rather than
+  being silently downgraded to `block`, and its existing "never challenge-as-authorization"
+  inline comment survives verbatim (proving the effect wasn't merely left alone by accident,
+  but re-affirmed after the DRAFT-removal edit touched the same block); the case index's own
+  `path:` keys (case-directory names — `delete/`, `rename/`, `near-similarity/` — unrelated to
+  the ADR-0017 §5 matcher-domain overload, which only governs a rule's `match:` block) are
+  left untouched, but gain a new clarifying comment stating literally that they are "not a
+  policy matcher"; and the ADR-0003 "rename never laxer than delete" invariant plus the
+  near-similarity adversarial case (`max(strictness(delete), strictness(rename))`) are
+  preserved verbatim. Adversarial case for this REQ itself: `require-review`/`near-similarity`
+  already appear in the file *before* any migration work — a Verify checking only their
+  presence would pass vacuously, so it must also fail while the DRAFT header and the new
+  clarifying comment are absent.
   - Test: `examples/archetypes/no-destruction/expected.yaml`
-  - Verify: `grep -q "require-review" examples/archetypes/no-destruction/expected.yaml && grep -q "near-similarity" examples/archetypes/no-destruction/expected.yaml`
+  - Verify: `! grep -qi "DRAFT" examples/archetypes/no-destruction/expected.yaml && grep -qi "not a policy matcher" examples/archetypes/no-destruction/expected.yaml && grep -q "never challenge-as-authorization" examples/archetypes/no-destruction/expected.yaml && grep -q "require-review" examples/archetypes/no-destruction/expected.yaml && grep -q "near-similarity" examples/archetypes/no-destruction/expected.yaml`
   - Level: doc
 
 ## P3-E3-S02 — Per-shape starter packs (topic-registry / service-catalog / infra-vars)
@@ -225,10 +234,13 @@ Requirements:
   non-comment line, and separately asserts no file under `examples/policies/declarative/**`,
   `examples/archetypes/**`, or `examples/packs/**` (S01/S02) references a `rego:` predicate
   leaf — keeping the quarantine structurally enforced, not merely documented. Adversarial
-  case: a future starter-pack rule that adds a `rego:` leaf to "borrow" the escape hatch
-  without going through E11 must fail this check, not merely fail code review.
+  case for this REQ itself: none of those directories reference a `rego:` leaf *today either*
+  (no rego integration exists yet, migrated or not), so a Verify checking only their absence
+  would pass vacuously before the marker (S03-01) even exists; it must also require the
+  marker's presence, so the check only means something once there is a quarantined escape
+  hatch to keep everything else clear of.
   - Test: `examples/policies/rego/bounded_change.rego`
-  - Verify: `! grep -rq "rego:" examples/policies/declarative examples/archetypes examples/packs 2>/dev/null`
+  - Verify: `grep -q "locked: D-012" examples/policies/rego/bounded_change.rego && ! grep -rq "rego:" examples/policies/declarative examples/archetypes examples/packs 2>/dev/null`
   - Level: doc
 - **REQ-P3-E3-S03-03** — Given the rego example is excluded from S01's migration, when S01's
   repo-wide DRAFT-marker sweep (REQ-P3-E3-S01-03) runs, then `examples/policies/rego/

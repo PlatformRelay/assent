@@ -99,8 +99,10 @@ Requirements:
   `match` restricted to exactly one of the four matcher-domain shapes (`files`,
   `values.pointers`, `fileEvents`, `valueChanges` — no generic `path` overload), and either
   `prove: {obligation: string, when: <assert tree>}` with `onFailure: {effect: enum [comment,
-  challenge, block], code: string}` (never a bare `effect: vouch`), or a non-obligation
-  `effect` (`comment`/`challenge`/`block`) with no `prove`. Composition inside `when`/`assert`
+  challenge, block, require-review], code: string}` (never a bare `effect: vouch`) — `require-
+  review` is satisfied only by forge-proven `ApprovalEvidence` (ADR-0017 §3, S04), never a
+  bare vouch or a resolved-discussion proxy — or a non-obligation `effect`
+  (`comment`/`challenge`/`block`) with no `prove`. Composition inside `when`/`assert`
   is `all`/`any`/`not` with CEL-string leaves (ADR-0013); a bare string is single-leaf
   shorthand. `entries:` (`mode: enum [document, list, map]`, `root`, `identity.pointer`) is
   present wherever a class declares governed subjects; **unkeyed `list` mode without

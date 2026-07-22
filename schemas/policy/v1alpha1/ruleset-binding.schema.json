@@ -1,6 +1,55 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://assent.dev/schemas/policy/v1alpha1/ruleset-binding.schema.json",
-  "title": "RulesetBinding (PLACEHOLDER — REQ-P3-E1-S01-02 not yet implemented)",
-  "type": "object"
+  "title": "RulesetBinding",
+  "description": "Routing: (class, environment) -> packs + risk threshold (ADR-0010 bindings.yaml). bindings[] is a named collection with mandatory unique (class, environment) IDs — source order carries no meaning without an explicit priority (ADR-0017 §9).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "bindings"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "RulesetBinding" },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/binding" },
+      "x-uniqueKeys": ["class", "environment"]
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "environment", "packs", "risk"],
+      "properties": {
+        "class": {
+          "type": "string",
+          "minLength": 1,
+          "description": "References a Config classes[].name."
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "description": "References a Config environments[].name, or \"*\" as the documented wildcard/default."
+        },
+        "packs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["threshold"],
+          "properties": {
+            "threshold": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "sum(points) at or below this value approves (ADR-0007); over it reviews."
+            }
+          }
+        }
+      }
+    }
+  }
 }

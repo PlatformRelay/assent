@@ -38,6 +38,11 @@ var (
 func newCompiler() *jsonschema.Compiler {
 	c := jsonschema.NewCompiler()
 	c.RegisterVocabulary(uniqueKeysVocabulary())
+	// x-uniqueKeys is a vendor keyword with no $vocabulary declaration in the
+	// schema files (keeping them portable to generic draft 2020-12
+	// validators, which simply ignore the unknown keyword) — force this
+	// compiler to still assert it.
+	c.AssertVocabs()
 	return c
 }
 

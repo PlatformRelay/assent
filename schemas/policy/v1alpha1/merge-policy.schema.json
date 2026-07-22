@@ -1,6 +1,256 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://assent.dev/schemas/policy/v1alpha1/merge-policy.schema.json",
-  "title": "MergePolicy (PLACEHOLDER — REQ-P3-E1-S01-03 not yet implemented)",
-  "type": "object"
+  "title": "MergePolicy",
+  "description": "A rule pack: how its classes' governed content becomes stable EntryRef subjects (spec.entries, ADR-0017 §5), and the rules[] that prove obligations or emit non-obligation effects against them (ADR-0017 §2/§3). assert/when CEL leaves are restricted to the frozen predicate-scope table (docs/planning/predicate-scope.md) — a future `assent lint` rejects any other top-level field reference as a load-time error (ADR-0016 §2).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "assent.dev/v1alpha1" },
+    "kind": { "const": "MergePolicy" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rules"],
+      "properties": {
+        "entries": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/entriesSpec" },
+          "description": "Keyed by Config classes[].name; declares how that class's content becomes stable EntryRef subjects (ADR-0017 §5). Optional for packs whose rules only match at file granularity."
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/rule" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "entriesSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "root"],
+      "properties": {
+        "mode": {
+          "enum": ["document", "list", "map"],
+          "description": "document: one governed resource per file. list: an array of resources, identity.pointer mandatory (unkeyed lists are rejected at lint, not guessed). map: an object keyed by resource identity."
+        },
+        "root": {
+          "type": "string",
+          "description": "JSON Pointer to the collection root within the document; empty string for document mode."
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pointer": {
+              "type": "string",
+              "minLength": 1,
+              "description": "JSON Pointer, relative to each entry, to its stable identity field."
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["mode"],
+            "properties": { "mode": { "const": "list" } }
+          },
+          "then": {
+            "required": ["identity"],
+            "properties": {
+              "identity": { "required": ["pointer"] }
+            }
+          }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "match"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "match": { "$ref": "#/$defs/match" },
+        "prove": { "$ref": "#/$defs/prove" },
+        "onFailure": { "$ref": "#/$defs/onFailure" },
+        "effect": {
+          "enum": ["comment", "challenge", "block"],
+          "description": "Non-obligation effect. Never present alongside prove/onFailure — an obligation-proving rule's outcome is entirely onFailure's (ADR-0017 §2)."
+        },
+        "message": { "type": "string" },
+        "points": { "type": "integer", "minimum": 0 }
+      },
+      "oneOf": [
+        {
+          "required": ["prove", "onFailure"],
+          "not": { "required": ["effect"] },
+          "description": "Obligation-proving rule."
+        },
+        {
+          "required": ["effect"],
+          "not": {
+            "anyOf": [{ "required": ["prove"] }, { "required": ["onFailure"] }]
+          },
+          "description": "Non-obligation effect rule."
+        }
+      ]
+    },
+    "prove": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation", "when"],
+      "properties": {
+        "obligation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Named proof this rule contributes; must match a binding's require: entry for obligation coverage (lint hard error otherwise)."
+        },
+        "when": { "$ref": "#/$defs/assertTree" }
+      }
+    },
+    "onFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect", "code"],
+      "properties": {
+        "effect": {
+          "enum": ["comment", "challenge", "block", "require-review"],
+          "description": "require-review is satisfied only by forge-proven ApprovalEvidence (ADR-0017 §3) — never a bare vouch."
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable finding code correlated across DecisionRecord/PresentationModel."
+        }
+      }
+    },
+    "assertTree": {
+      "description": "CEL condition tree: all/any/not combinators over CEL-string leaves (ADR-0013); a bare string is single-leaf shorthand. Leaf expressions may only reference the frozen predicate-scope fields (docs/planning/predicate-scope.md).",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "$ref": "#/$defs/leaf" },
+        { "$ref": "#/$defs/combinator" }
+      ]
+    },
+    "leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cel"],
+      "properties": {
+        "cel": { "type": "string", "minLength": 1 },
+        "message": { "type": "string" }
+      }
+    },
+    "combinator": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "all": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/assertTree" }
+        },
+        "any": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/assertTree" }
+        },
+        "not": { "$ref": "#/$defs/assertTree" }
+      }
+    },
+    "kind": { "enum": ["add", "modify", "delete", "rename"] },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "description": "Restricted to exactly one of the four matcher domains (ADR-0017 §5) — ends the path-as-glob-and-pointer overload.",
+      "properties": {
+        "files": {
+          "$ref": "#/$defs/filesMatch",
+          "description": "Whole-file glob scope, independent of change kind."
+        },
+        "values": {
+          "$ref": "#/$defs/valuesMatch",
+          "description": "values.pointers: value-level modify match by JSON Pointer (implicit kind: modify) — the common old/new predicate case."
+        },
+        "fileEvents": {
+          "$ref": "#/$defs/fileEventsMatch",
+          "description": "Whole-file lifecycle events (add/modify/delete/rename)."
+        },
+        "valueChanges": {
+          "$ref": "#/$defs/valueChangesMatch",
+          "description": "Value-level match with explicit kind discrimination (add/modify/delete of a pointer-addressed value)."
+        }
+      }
+    },
+    "filesMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths"],
+      "properties": {
+        "paths": { "$ref": "#/$defs/globs" }
+      }
+    },
+    "fileEventsMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths", "kinds"],
+      "properties": {
+        "paths": { "$ref": "#/$defs/globs" },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/kind" }
+        }
+      }
+    },
+    "valuesMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pointers"],
+      "properties": {
+        "paths": { "$ref": "#/$defs/globs" },
+        "pointers": { "$ref": "#/$defs/pointers" }
+      }
+    },
+    "valueChangesMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pointers", "kinds"],
+      "properties": {
+        "paths": { "$ref": "#/$defs/globs" },
+        "pointers": { "$ref": "#/$defs/pointers" },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["add", "modify", "delete"] }
+        }
+      }
+    },
+    "globs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "pointers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
 }

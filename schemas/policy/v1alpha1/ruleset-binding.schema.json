@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/policy/v1alpha1/ruleset-binding.schema.json",
+  "title": "RulesetBinding (PLACEHOLDER — REQ-P3-E1-S01-02 not yet implemented)",
+  "type": "object"
+}

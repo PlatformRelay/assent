@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/policy/v1alpha1/merge-policy.schema.json",
+  "title": "MergePolicy (PLACEHOLDER — REQ-P3-E1-S01-03 not yet implemented)",
+  "type": "object"
+}

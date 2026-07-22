@@ -13,12 +13,14 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/namedMatch" },
+      "x-uniqueKeys": ["name"],
       "description": "Environment classifier; last match wins as the documented default (ADR-0010)."
     },
     "classes": {
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/namedMatch" },
+      "x-uniqueKeys": ["name"],
       "description": "Change-class classifier; MergePolicy packs are routed to classes via RulesetBinding."
     },
     "providers": {

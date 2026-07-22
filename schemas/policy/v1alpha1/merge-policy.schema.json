@@ -30,7 +30,8 @@
         "rules": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/rule" }
+          "items": { "$ref": "#/$defs/rule" },
+          "x-uniqueKeys": ["name"]
         }
       }
     }

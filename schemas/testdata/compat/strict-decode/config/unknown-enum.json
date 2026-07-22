@@ -1,0 +1,7 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "Config",
+  "environments": [{"name": "dev", "match": {"paths": ["**"]}}],
+  "classes": [{"name": "kafka-topic", "match": {"paths": ["topics/**"]}}],
+  "providers": {"quota": {"type": "http", "failure": "sometimes"}}
+}

@@ -1,0 +1,15 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "Config",
+  "environments": [
+    {"name": "prod", "match": {"paths": ["topics/prod/**", "envs/prod/**"]}},
+    {"name": "dev", "match": {"paths": ["**"]}}
+  ],
+  "classes": [
+    {"name": "kafka-topic", "match": {"paths": ["topics/**/*.yaml"]}},
+    {"name": "infra-vars", "match": {"paths": ["**/*.tfvars"]}}
+  ],
+  "providers": {
+    "quota": {"type": "http", "url": "https://quota.example.com/api/v1/lookup", "failure": "closed"}
+  }
+}

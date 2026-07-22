@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://assent.dev/schemas/testfixture/v1alpha1/test-expectation.schema.json",
+  "title": "TestExpectation (PLACEHOLDER — REQ-P3-E1-S05-01/02 not yet implemented)",
+  "type": "object"
+}

@@ -310,9 +310,14 @@ Requirements:
   enum [APPROVE, REVIEW, BLOCK]`, an optional `findings[]` (must-contain by default; the case
   sets `exact: true` for a closed list, per the ADR-0017 consequence that `exact` is the
   safety default), an optional `absent[]` (rules that must not fire), and an optional
-  `score: {total, threshold}`. Adversarial case: a `findings[]` entry using the retired
-  `effect: vouch` fails validation (only `comment`/`challenge`/`block`, or an obligation
-  `prove` reference, are legal per S01's frozen vocabulary).
+  `score: {total, threshold}`. Each `findings[]` entry's `effect` is the same closed vocabulary
+  frozen by S01/S02 — `comment`, `challenge`, `block`, or `require-review` (satisfied only by
+  forge-proven `ApprovalEvidence`, never a bare vouch or a resolved-discussion proxy, ADR-0017
+  §3) — never a bare `effect: vouch`, which no longer exists anywhere in the vocabulary
+  (amended here from the ADR-0014 draft's `comment`/`challenge`/`block`-only list to align with
+  the coordinator's 🔴 DECIDED finding that `require-review` is part of the one shared
+  effect enum, not a MergePolicy/DecisionRecord-only addition). Adversarial case: a
+  `findings[]` entry using the retired `effect: vouch` fails validation.
   - Test: `schemas/testfixture/v1alpha1/test-expectation.schema.json`
   - Verify: `go test ./schemas/... -run TestExpectationSchema`
   - Level: L0

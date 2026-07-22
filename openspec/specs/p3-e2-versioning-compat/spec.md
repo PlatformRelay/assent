@@ -27,37 +27,45 @@ public API, no v1 SDK), §9 (compatibility rules & scope guards); D-016; oss-pla
   silently dropped or coerced.
 - **Operator input**: no.
 - **Dependencies**: P3-E1 (the schemas fixtures decode against).
-- **Definition of done**: `schema/fixtures/compat/strict-decode/` has ≥1 valid + ≥1
+- **Definition of done**: `schemas/testdata/compat/strict-decode/` has ≥1 valid + ≥1
   adversarial-invalid fixture per rule (unknown field, duplicate ID, unknown enum) per
   safety-bearing resource type; the suite fails if any adversarial fixture decodes cleanly, and
   fails if any valid fixture is rejected.
+
+  > **Path amend (D-016, 2026-07-22)**: D-016/ADR-0017 §8 forbid engine code under
+  > `internal/core` before the §8 exit-gate fixture (P3-E1-S07) lands, so this story's fixtures
+  > and tests were relocated to the `schemas` package (contract-tooling, not engine code) — see
+  > `agent-context/INBOX.md` "P3-E2 fixture tests stay under schemas/ (D-016)". Fixtures live at
+  > `schemas/testdata/compat/strict-decode/`; tests at `schemas/compat_strictdecode_test.go`,
+  > reusing the existing `ConfigSchema`/`RulesetBindingSchema`/`MergePolicySchema` validators.
+  > Revert to `internal/core/schema/...` only after the Phase-3 gate closes.
 
 Requirements:
 
 - **REQ-P3-E2-S01-01** — Given a MergePolicy/RulesetBinding/Config fixture carrying one field
   absent from its P3-E1 schema, when the strict-decode suite runs, then decoding is rejected
   with a positioned error naming the unknown field.
-  - Test: `internal/core/schema/strictdecode_test.go`
-  - Verify: `go test ./internal/core/schema/... -run TestStrictDecode/unknown_field`
+  - Test: `schemas/compat_strictdecode_test.go`
+  - Verify: `go test ./schemas/... -run TestStrictDecode/unknown_field`
   - Level: L0
 - **REQ-P3-E2-S01-02** — Given a fixture whose named collection (entries/rules/obligations)
   carries two elements sharing one ID, when decoded, then the suite rejects it as a
   duplicate-ID violation. Adversarial case: the duplicate differs only in an unrelated field, so
   a naive last-write-wins merge would otherwise hide it.
-  - Test: `internal/core/schema/strictdecode_test.go`
-  - Verify: `go test ./internal/core/schema/... -run TestStrictDecode/duplicate_id`
+  - Test: `schemas/compat_strictdecode_test.go`
+  - Verify: `go test ./schemas/... -run TestStrictDecode/duplicate_id`
   - Level: L0
 - **REQ-P3-E2-S01-03** — Given a fixture using an enum value not declared by its resource's
   schema (e.g. an `effect` or `onFailure.effect` outside the frozen set), when decoded, then the
   suite rejects it rather than coercing to a default or nearest-known value.
-  - Test: `internal/core/schema/strictdecode_test.go`
-  - Verify: `go test ./internal/core/schema/... -run TestStrictDecode/unknown_enum`
+  - Test: `schemas/compat_strictdecode_test.go`
+  - Verify: `go test ./schemas/... -run TestStrictDecode/unknown_enum`
   - Level: L0
 - **REQ-P3-E2-S01-04** — Given the same three rules, when a fixture with no unknown
   field/duplicate ID/unknown enum is decoded, then it succeeds unchanged — the suite asserts
   both directions so a rule cannot be satisfied by a validator that rejects everything.
-  - Test: `internal/core/schema/strictdecode_test.go`
-  - Verify: `go test ./internal/core/schema/... -run TestStrictDecode/valid`
+  - Test: `schemas/compat_strictdecode_test.go`
+  - Verify: `go test ./schemas/... -run TestStrictDecode/valid`
   - Level: L0
 
 ## P3-E2-S02 — Additive-tolerant reports + unique-ID named collections

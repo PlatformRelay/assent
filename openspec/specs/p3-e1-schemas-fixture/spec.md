@@ -308,8 +308,8 @@ Requirements:
 - **REQ-P3-E1-S05-01** — Given ADR-0014's `expect.yaml`, when
   `schemas/testfixture/v1alpha1/test-expectation.schema.json` is authored, then it requires `decision:
   enum [APPROVE, REVIEW, BLOCK]`, an optional `findings[]` (must-contain by default; the case
-  sets `exact: true` for a closed list, per the ADR-0017 consequence that `exact` is the
-  safety default), an optional `absent[]` (rules that must not fire), and an optional
+  sets `exact: true` for a closed list — the recommended stricter mode to opt into, not
+  the default; an omitted `exact` is must-contain), an optional `absent[]` (rules that must not fire), and an optional
   `score: {total, threshold}`. Each `findings[]` entry's `effect` is the same closed vocabulary
   frozen by S01/S02 — `comment`, `challenge`, `block`, or `require-review` (satisfied only by
   forge-proven `ApprovalEvidence`, never a bare vouch or a resolved-discussion proxy, ADR-0017

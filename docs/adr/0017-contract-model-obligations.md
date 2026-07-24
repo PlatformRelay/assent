@@ -109,7 +109,7 @@ auto-merge budget (P2-8).
 ## Consequences
 
 - ADR-0007/0010/0011/0014/0015 are reshaped as stated; ADR-0014's `expect.yaml` moves to
-  obligation/predicate/finding-code assertions with **exact** as the safety default (P2-2,
+  obligation/predicate/finding-code assertions with **exact** as the recommended opt-in mode for closed-list cases — not the default; an omitted `exact` is must-contain (P2-2,
   already partially amended). Examples migrate to `prove`/`onFailure` when the schemas land
   (P2-5) — until then they carry DRAFT markers.
 - e2e build tags are compiled/vetted on every PR; real-forge conformance gates forge-adapter

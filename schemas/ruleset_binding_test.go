@@ -115,4 +115,59 @@ func TestRulesetBindingSchema(t *testing.T) {
 			t.Fatalf("expected valid, got: %v", err)
 		}
 	})
+
+	// REQ-P3-E1-S01 / ADR-0017 §2: a binding is the authored home for the named
+	// obligations a (class, environment) requires — the coverage invariant that
+	// merge-policy prove.obligation and evaluation-input.require both reference.
+	t.Run("binding with a require obligation list is valid", func(t *testing.T) {
+		const doc = `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "RulesetBinding",
+			"bindings": [
+				{"class": "kafka-topic", "environment": "prod", "packs": ["topics"], "risk": {"threshold": 4}, "require": ["ownership", "non-destructive"]}
+			]
+		}`
+		if err := validateJSON(RulesetBindingSchema, doc); err != nil {
+			t.Fatalf("expected valid, got: %v", err)
+		}
+	})
+
+	t.Run("binding with empty require is valid (no required obligations, vacuously covered)", func(t *testing.T) {
+		const doc = `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "RulesetBinding",
+			"bindings": [
+				{"class": "kafka-topic", "environment": "dev", "packs": ["topics"], "risk": {"threshold": 10}, "require": []}
+			]
+		}`
+		if err := validateJSON(RulesetBindingSchema, doc); err != nil {
+			t.Fatalf("expected valid, got: %v", err)
+		}
+	})
+
+	t.Run("adversarial: duplicate require entries are invalid", func(t *testing.T) {
+		const doc = `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "RulesetBinding",
+			"bindings": [
+				{"class": "kafka-topic", "environment": "prod", "packs": ["topics"], "risk": {"threshold": 4}, "require": ["ownership", "ownership"]}
+			]
+		}`
+		if err := validateJSON(RulesetBindingSchema, doc); err == nil {
+			t.Fatal("expected duplicate require[] entries to fail validation")
+		}
+	})
+
+	t.Run("adversarial: empty-string require entry is invalid", func(t *testing.T) {
+		const doc = `{
+			"apiVersion": "assent.dev/v1alpha1",
+			"kind": "RulesetBinding",
+			"bindings": [
+				{"class": "kafka-topic", "environment": "prod", "packs": ["topics"], "risk": {"threshold": 4}, "require": [""]}
+			]
+		}`
+		if err := validateJSON(RulesetBindingSchema, doc); err == nil {
+			t.Fatal("expected empty-string require[] entry to fail validation")
+		}
+	})
 }

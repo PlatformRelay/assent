@@ -48,6 +48,12 @@
               "description": "sum(points) at or below this value approves (ADR-0007); over it reviews."
             }
           }
+        },
+        "require": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "The named obligations this (class, environment) requires — the authored home for ADR-0017 §2 obligation coverage. Each entry must be proved by a rule in the bound packs (a MergePolicy rule's prove.obligation); a require entry that no rule proves is a lint hard error (docs/planning/lint-hard-errors.md, obligation coverage). Absent or empty ⇒ no required obligations (vacuously covered). Mirrors the runtime EvaluationInput.require the engine emits per class slice."
         }
       }
     }

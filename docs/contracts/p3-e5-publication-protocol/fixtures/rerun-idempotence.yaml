@@ -22,7 +22,7 @@ run1:
       - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
         occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
       - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
-        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaaa"
   stepsExecuted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
   artifactsCreated:
     - kind: finding-thread
@@ -32,7 +32,7 @@ run1:
       resolved: false
     - kind: finding-thread
       slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
-      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaaa"
       forgeId: "note/9002"
       resolved: false
     - kind: summary-comment
@@ -54,7 +54,7 @@ run2:
       - slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
         occurrence: "sha256:c6957a516c95532386bed08f56441dfbb8d18efda24f5abdab1e48437aa3357d"
       - slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
-        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+        occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaaa"
   step2ExistingArtifacts:
     - forgeId: "note/9001"
       slot: { rule: topic-safety/retention-shrink-challenge, entryRef: "topic-registry:orders.events.v1", effect: challenge }
@@ -62,7 +62,7 @@ run2:
       resolved: true
     - forgeId: "note/9002"
       slot: { rule: ownership/entry-owner-required, entryRef: "topic-registry:orders.events.v1", effect: comment }
-      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa"
+      occurrence: "sha256:1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaa1111aaaa"
       resolved: false
     - forgeId: "note/9000"
       kind: summary-comment

@@ -32,6 +32,10 @@ schema-per-contract slices; fixture authoring; schema-validation CI job; predica
 table freeze (ADR-0013); `assent lint` hard-error list spec (ADR-0010 amendment);
 ApprovalEvidence slice; compatibility fixture; OQ-8/9/10/13/22 resolutions (OQ-21 moved to
 P3-E4, OQ-23 resolved here).
+**Fixture: committed** (P3-E1-S07, D-016 gate closed 2026-07-24) — the strict end-to-end
+fixture `examples/contracts/d016-strict-fixture/` and the sanitized named-consumer
+compatibility fixture `examples/contracts/named-consumer-compat/` both validate in the S06
+CI sweep (`TestExampleContractsFixturesValidate`); Phase 5 (E1–E9) engine code may now begin.
 
 ### P3-E2 — Versioning & compatibility spec — Planned
 Specify ADR-0017 §9 as testable rules: safety-bearing resources reject unknown

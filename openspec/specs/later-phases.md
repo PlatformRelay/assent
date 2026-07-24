@@ -32,14 +32,12 @@ schema-per-contract slices; fixture authoring; schema-validation CI job; predica
 table freeze (ADR-0013); `assent lint` hard-error list spec (ADR-0010 amendment);
 ApprovalEvidence slice; compatibility fixture; OQ-8/9/10/13/22 resolutions (OQ-21 moved to
 P3-E4, OQ-23 resolved here).
-**Fixture: committed; D-016 gate STAGED — closes on merge to `main`** (P3-E1-S07, 2026-07-24)
-— the strict end-to-end fixture `examples/contracts/d016-strict-fixture/` and the sanitized
-named-consumer compatibility fixture `examples/contracts/named-consumer-compat/` both exist
-and pass the S06 sweep (`TestExampleContractsFixturesValidate`) **locally** plus the full
-`task check` gate on `lane/p3-e1-s07`. Because push/PR is blocked this session (D-001/D-009),
-the schemas CI job has not yet run on these fixtures: the gate CLOSES — and Phase 5 (E1–E9)
-engine code may begin — only once this lane and its unmerged base land on `main` with schemas
-CI green there. See decision **D-024**.
+**Fixture: committed; D-016 gate CLOSED** (P3-E1-S07, 2026-07-24) — the strict end-to-end
+fixture `examples/contracts/d016-strict-fixture/` and the sanitized named-consumer
+compatibility fixture `examples/contracts/named-consumer-compat/` are on `main` (@ `93ea446`)
+and validate in CI: the schemas job (`TestExampleContractsFixturesValidate`) is green on `main`.
+The gate is closed and **Phase 5 (E1–E9) engine code is unblocked**. See decisions **D-024**
+(staged) and **D-025** (closure confirmed).
 
 ### P3-E2 — Versioning & compatibility spec — Planned
 Specify ADR-0017 §9 as testable rules: safety-bearing resources reject unknown

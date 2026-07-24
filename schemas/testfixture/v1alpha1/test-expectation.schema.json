@@ -17,12 +17,12 @@
         "findings": {
           "type": "array",
           "items": { "$ref": "#/$defs/finding" },
-          "description": "Must-contain by default (each listed finding must fire, others may also fire); set the sibling `exact: true` for a closed list (ADR-0017 consequence: exact is the safety default for anyone opting in)."
+          "description": "Must-contain by default (each listed finding must fire, others may also fire); set the sibling `exact: true` for a closed list. Closed-list (exact) is the stricter, recommended mode to opt into, but it is not the default — an omitted `exact` is must-contain."
         },
         "exact": {
           "type": "boolean",
-          "default": true,
-          "description": "true: findings[] is the complete, closed list of findings the case must produce (ADR-0017 consequence — exact is the safety default). false/absent: must-contain semantics, other findings may also fire."
+          "default": false,
+          "description": "false/absent (the default): must-contain semantics — every finding in findings[] must fire, but other findings may also fire. true: findings[] is the complete, closed list the case must produce (the stricter mode an author opts into; nothing else may fire). REQ-P3-E1-S05-01 freezes must-contain as the default so an adopter's omitted-`exact` test never silently flips to a closed list."
         },
         "absent": {
           "type": "array",

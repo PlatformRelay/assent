@@ -2,6 +2,7 @@ package schemas
 
 import (
 	_ "embed"
+	"encoding/json"
 	"testing"
 )
 
@@ -113,6 +114,37 @@ func TestExpectationSchema_Validates(t *testing.T) {
 			t.Fatal("expected findings[] entry missing effect to fail validation")
 		}
 	})
+}
+
+// REQ-P3-E1-S05-01 freezes must-contain-by-default semantics: an absent `exact`
+// means "findings[] must all fire, others may too". The schema's `exact.default`
+// annotation must therefore be false — a `default: true` silently flips an
+// adopter's omitted-`exact` test from permissive must-contain to a closed list
+// (roast P1-2). This guards the frozen annotation against re-inversion.
+func TestExactDefaultIsMustContain(t *testing.T) {
+	var schema map[string]any
+	if err := json.Unmarshal(testExpectationSchemaJSON, &schema); err != nil {
+		t.Fatalf("unmarshal test-expectation schema: %v", err)
+	}
+	defs, ok := schema["$defs"].(map[string]any)
+	if !ok {
+		t.Fatal("schema has no $defs object")
+	}
+	expectation, ok := defs["expectation"].(map[string]any)
+	if !ok {
+		t.Fatal("$defs has no expectation object")
+	}
+	props, ok := expectation["properties"].(map[string]any)
+	if !ok {
+		t.Fatal("expectation has no properties object")
+	}
+	exact, ok := props["exact"].(map[string]any)
+	if !ok {
+		t.Fatal("expectation.properties has no exact object")
+	}
+	if got, ok := exact["default"].(bool); !ok || got != false {
+		t.Fatalf("exact.default must be false (must-contain by default, REQ-P3-E1-S05-01); got %v", exact["default"])
+	}
 }
 
 // REQ-P3-E1-S05-02: .assent/tests/<pack>/cases.yaml's cases[] entries require

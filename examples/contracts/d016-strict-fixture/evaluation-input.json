@@ -1,0 +1,59 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "EvaluationInput",
+  "changeSet": {
+    "changes": [
+      {
+        "subject": "topic-registry:orders.events.v1",
+        "file": "topics/prod/orders.events.v1.yaml",
+        "path": "/partitions",
+        "kind": "modify",
+        "old": 12,
+        "new": 6
+      },
+      {
+        "subject": "topic-registry:orders.events.v1",
+        "file": "topics/prod/orders.events.v1.yaml",
+        "path": "",
+        "kind": "rename",
+        "old": "topics/prod/orders.v1.yaml",
+        "new": "topics/prod/orders.events.v1.yaml"
+      },
+      {
+        "subject": "topic-registry:payments.settled.v2",
+        "file": "topics/prod/payments.settled.v2.yaml",
+        "path": "/retentionMs",
+        "kind": "modify",
+        "old": 86400000,
+        "new": 604800000
+      }
+    ]
+  },
+  "facts": {
+    "owner": {
+      "team": {
+        "state": "expired",
+        "sensitive": true,
+        "observedAt": "2026-07-24T09:00:00Z",
+        "expiresAt": "2026-07-24T08:45:00Z",
+        "reason": "team-directory fact past its maxAge relative to this evaluation"
+      }
+    },
+    "quota": {
+      "max_partitions": {
+        "state": "resolved",
+        "sensitive": false,
+        "observedAt": "2026-07-24T09:00:00Z",
+        "expiresAt": "2026-07-24T10:00:00Z",
+        "value": 24
+      }
+    }
+  },
+  "mr": {
+    "author": "dev-a",
+    "sourceBranch": "topic/orders-repartition",
+    "targetBranch": "main",
+    "labels": ["kafka", "prod"]
+  },
+  "require": ["ownership", "non-destructive"]
+}

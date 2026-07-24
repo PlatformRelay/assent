@@ -1,0 +1,23 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "PresentationModel",
+  "decision": "BLOCK",
+  "findings": [
+    {
+      "rule": "topic-owner-must-approve",
+      "obligation": "ownership",
+      "effect": "require-review",
+      "subject": "topic-registry:orders.events.v1",
+      "points": 0,
+      "code": "ownership-approval-missing"
+    },
+    {
+      "rule": "partitions-must-not-shrink",
+      "obligation": "non-destructive",
+      "effect": "block",
+      "subject": "topic-registry:orders.events.v1",
+      "points": 10,
+      "code": "partition-count-shrunk"
+    }
+  ]
+}

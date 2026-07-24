@@ -1,0 +1,28 @@
+{
+  "apiVersion": "assent.dev/v1alpha1-placeholder",
+  "kind": "NamedConsumerSignalsPlaceholder",
+  "_placeholder": "P3-E4 (ADR-0018 rollout phase/profile/comparison) and P3-E5 (ADR-0019 publication marker) own the final field definitions. This doc proves ONLY that the six named-consumer signals (D-017/B5) are representable as STRUCTURED DATA today — typed values under named keys, never inferred from message bodies, labels, or rule names. Its apiVersion is deliberately NOT the frozen contract group, so schemas/fixtures_validate_test.go skips it (no frozen schema is force-applied to a field a later epic still owns).",
+  "signals": {
+    "phase": "enforce",
+    "profile": {
+      "name": "prod-strict",
+      "revision": 7
+    },
+    "comparisonDelta": {
+      "baseProfile": "prod-strict@6",
+      "headProfile": "prod-strict@7",
+      "added": 2,
+      "removed": 0,
+      "changed": 1
+    },
+    "publicationMarker": {
+      "correlationId": "assent:mr/8123:run/01J8Z9",
+      "kind": "decision-thread"
+    },
+    "budgetReservation": {
+      "window": "2026-07-24",
+      "reserved": 3,
+      "limit": 10
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "RulesetBinding",
+  "bindings": [
+    {
+      "class": "topic-registry",
+      "environment": "prod",
+      "packs": ["topic-safety"],
+      "risk": { "threshold": 1 },
+      "require": ["ownership", "non-destructive"]
+    }
+  ]
+}

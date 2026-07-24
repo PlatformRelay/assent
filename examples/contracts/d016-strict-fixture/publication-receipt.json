@@ -1,0 +1,16 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "PublicationReceipt",
+  "operations": [
+    {
+      "kind": "thread",
+      "targetId": "mr/8123/discussion/ownership-approval-missing",
+      "performedAt": "2026-07-24T09:01:00Z"
+    },
+    {
+      "kind": "thread",
+      "targetId": "mr/8123/discussion/partition-count-shrunk",
+      "performedAt": "2026-07-24T09:01:01Z"
+    }
+  ]
+}

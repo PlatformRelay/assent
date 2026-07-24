@@ -1,0 +1,34 @@
+{
+  "apiVersion": "assent.dev/v1alpha1",
+  "kind": "EvaluationInput",
+  "changeSet": {
+    "changes": [
+      {
+        "subject": "topic-registry:orders.events.v1",
+        "file": "topics/prod/orders.events.v1.yaml",
+        "path": "/partitions",
+        "kind": "modify",
+        "old": 6,
+        "new": 12
+      }
+    ]
+  },
+  "facts": {
+    "owner": {
+      "team": {
+        "state": "resolved",
+        "sensitive": true,
+        "observedAt": "2026-07-24T09:00:00Z",
+        "expiresAt": "2026-07-24T09:15:00Z",
+        "value": "streaming-platform"
+      }
+    }
+  },
+  "mr": {
+    "author": "dev-b",
+    "sourceBranch": "topic/orders-grow",
+    "targetBranch": "main",
+    "labels": ["kafka"]
+  },
+  "require": ["ownership"]
+}

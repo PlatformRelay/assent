@@ -279,7 +279,10 @@ func fileStem(change, doc map[string]any) string {
 	if i := strings.LastIndex(base, "/"); i >= 0 {
 		base = base[i+1:]
 	}
-	if i := strings.Index(base, "."); i >= 0 {
+	// Strip only the final extension (last dot) — the "stem" of
+	// orders.events.v1.yaml is orders.events.v1, which is exactly the value
+	// that could be mistaken for a content-derived /metadata/name.
+	if i := strings.LastIndex(base, "."); i >= 0 {
 		base = base[:i]
 	}
 	return base

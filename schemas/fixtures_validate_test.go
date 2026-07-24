@@ -27,6 +27,11 @@ var contractSchemasByKind = map[string]*jsonschema.Schema{
 	"ReplayBundle":       ReplayBundleSchema,
 	"PresentationModel":  PresentationModelSchema,
 	"PublicationReceipt": PublicationReceiptSchema,
+	// ApprovalEvidence is registered so a standalone ApprovalEvidence fixture
+	// (the named-consumer-compat evidence instance, P3-E1-S07 REQ-03) is swept
+	// against its owning schema too, instead of tripping the !known hard-error
+	// branch (decide-and-log, P3-E1-S07: strictly widens sweep coverage).
+	"ApprovalEvidence": ApprovalEvidenceSchema,
 }
 
 const contractAPIVersion = "assent.dev/v1alpha1"

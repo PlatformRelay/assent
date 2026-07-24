@@ -18,6 +18,14 @@
       "subject": "topic-registry:orders.events.v1",
       "points": 10,
       "code": "partition-count-shrunk"
+    },
+    {
+      "rule": "topic-owner-must-approve",
+      "obligation": "ownership",
+      "effect": "require-review",
+      "subject": "topic-registry:payments.settled.v2",
+      "points": 0,
+      "code": "ownership-approval-missing"
     }
   ]
 }

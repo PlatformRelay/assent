@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -91,34 +92,59 @@ func TestD016StrictFixture(t *testing.T) {
 		if renamed == nil {
 			t.Fatal("expected one change with kind: rename (base->head rename)")
 		}
-		// Stable identity: the renamed change's subject EntryRef is the same
-		// stable class:identity value another change also references — the file
-		// path moved but the governed subject did not.
-		subject, _ := renamed["subject"].(string)
-		oldFile, _ := renamed["old"].(string)
-		newFile, _ := renamed["new"].(string)
-		if oldFile == "" || newFile == "" || oldFile == newFile {
-			t.Errorf("renamed change must carry distinct old/new file paths, got old=%q new=%q", oldFile, newFile)
-		}
-		// The identity pointer is declared in the pack (merge-policy entries).
+
+		// The pack declares identity is content-derived: entries.identity.pointer
+		// points INTO each document, not at its filename (ADR-0017 §5 — why
+		// filename-derived identity is wrong).
 		entries := mergePolicyEntries(t)
 		if len(entries) == 0 {
 			t.Fatal("merge-policy must declare entries with identity.pointer proving stable identity")
 		}
-		foundIdentity := false
+		var idPointer string
 		for _, spec := range entries {
 			sm := spec.(map[string]any)
 			if id, ok := sm["identity"].(map[string]any); ok {
 				if ptr, _ := id["pointer"].(string); ptr != "" {
-					foundIdentity = true
+					idPointer = ptr
 				}
 			}
 		}
-		if !foundIdentity {
-			t.Error("merge-policy entries must declare identity.pointer (stable identity across rename)")
+		if idPointer == "" {
+			t.Fatal("merge-policy entries must declare identity.pointer (content-derived stable identity)")
 		}
-		if subject == "" {
-			t.Error("renamed change must carry a stable subject EntryRef")
+
+		// The rename change carries whole-file (path: "") base/head document
+		// content in old/new. BOTH the filename/path AND the head content change,
+		// yet the value at identity.pointer is the SAME in base and head — that is
+		// what makes the governed subject stable across the rename.
+		oldDoc, okOld := renamed["old"].(map[string]any)
+		newDoc, okNew := renamed["new"].(map[string]any)
+		if !okOld || !okNew {
+			t.Fatal("rename change must carry whole-file base/head document content in old/new")
+		}
+		oldName := valueAtPointer(oldDoc, idPointer)
+		newName := valueAtPointer(newDoc, idPointer)
+		if oldName == "" || newName == "" {
+			t.Fatalf("identity.pointer %q must resolve in both base and head docs, got base=%q head=%q", idPointer, oldName, newName)
+		}
+		if oldName != newName {
+			t.Errorf("identity at %q must be stable across the rename, got base=%q head=%q", idPointer, oldName, newName)
+		}
+
+		// The resolved subject EntryRef's identity part must equal the
+		// content-derived name — NOT either filename stem. Both stems here
+		// (legacy-orders, orders-events) deliberately differ from the
+		// /metadata/name (orders.events.v1), so a filename-derived identity
+		// would produce a different EntryRef and this assertion would fail.
+		subject, _ := renamed["subject"].(string)
+		wantSubject := "topic-registry:" + newName
+		if subject != wantSubject {
+			t.Errorf("subject must track content identity %q, got %q", wantSubject, subject)
+		}
+		oldStem := fileStem(renamed, oldDoc)
+		newStem := fileStem(renamed, newDoc)
+		if oldStem == newName || newStem == newName {
+			t.Errorf("test setup weak: a filename stem equals the content identity %q (base stem=%q head stem=%q) — identity would be indistinguishable from filename-derived", newName, oldStem, newStem)
 		}
 	})
 
@@ -223,4 +249,38 @@ func mergePolicyRules(t *testing.T) []any {
 	t.Helper()
 	spec := fixtureObj(t, "merge-policy.json")["spec"].(map[string]any)
 	return spec["rules"].([]any)
+}
+
+// valueAtPointer resolves a simple RFC-6901 JSON Pointer (no ~0/~1 escapes
+// needed for this fixture) against a document, returning the string value at
+// that location or "" if it is absent or non-string.
+func valueAtPointer(doc map[string]any, pointer string) string {
+	node := any(doc)
+	for _, tok := range strings.Split(strings.TrimPrefix(pointer, "/"), "/") {
+		m, ok := node.(map[string]any)
+		if !ok {
+			return ""
+		}
+		node = m[tok]
+	}
+	s, _ := node.(string)
+	return s
+}
+
+// fileStem returns the filename stem (basename without extension) for a rename
+// side. The head stem comes from the change's file field; the base stem comes
+// from the sourcePath the base document records.
+func fileStem(change, doc map[string]any) string {
+	path, _ := doc["sourcePath"].(string)
+	if path == "" {
+		path, _ = change["file"].(string)
+	}
+	base := path
+	if i := strings.LastIndex(base, "/"); i >= 0 {
+		base = base[i+1:]
+	}
+	if i := strings.Index(base, "."); i >= 0 {
+		base = base[:i]
+	}
+	return base
 }

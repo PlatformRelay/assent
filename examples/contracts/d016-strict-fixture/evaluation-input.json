@@ -5,7 +5,7 @@
     "changes": [
       {
         "subject": "topic-registry:orders.events.v1",
-        "file": "topics/prod/orders.events.v1.yaml",
+        "file": "topics/prod/orders-events.yaml",
         "path": "/partitions",
         "kind": "modify",
         "old": 12,
@@ -13,11 +13,21 @@
       },
       {
         "subject": "topic-registry:orders.events.v1",
-        "file": "topics/prod/orders.events.v1.yaml",
+        "file": "topics/prod/orders-events.yaml",
         "path": "",
         "kind": "rename",
-        "old": "topics/prod/orders.v1.yaml",
-        "new": "topics/prod/orders.events.v1.yaml"
+        "old": {
+          "sourcePath": "topics/prod/legacy-orders.yaml",
+          "metadata": { "name": "orders.events.v1" },
+          "partitions": 12,
+          "retentionMs": 604800000
+        },
+        "new": {
+          "sourcePath": "topics/prod/orders-events.yaml",
+          "metadata": { "name": "orders.events.v1" },
+          "partitions": 6,
+          "retentionMs": 604800000
+        }
       },
       {
         "subject": "topic-registry:payments.settled.v2",

@@ -240,6 +240,7 @@ decision changes when the fact resolves.
 Requirements:
 - **REQ-E5-S07-01** *(closes REF-GAP-2)* — most-specific-first path resolution over a fixture tree. Test: `internal/provider/builtin/repo_file_test.go`; Verify: `go test ./internal/provider/... -run TestBuiltinRepoFileMostSpecific`; Level: L0
 - **REQ-E5-S07-02** *(fail-safe)* — absent file → `unavailable`, never `resolved` with nil/empty pretending presence. Test: same; Verify: `go test ./internal/provider/... -run TestBuiltinRepoFileAbsentUnavailable`; Level: L0
+- **REQ-E5-S07-03** *(SECURITY · D-129, closes OQ-28)* — **filesystem** containment, not only path containment. `RepoFileOpts.FS` must be a symlink-safe root (`(*os.Root).FS()` via `builtin.OpenRepoRoot`); `cmd/assent` injects one for the checkout tree, which is the MR head. Independently, a candidate whose path traverses a symlink at ANY component is refused (`unavailable`, contributor-readable reason naming the candidate) and STOPS the walk-up — it is never skipped to a less-specific file, and in-root symlinks are refused too because a link that stays inside the FS root can still leave the declared `roots` clip. Legitimate in-root resolution is unchanged. Test: `internal/provider/builtin/repo_file_symlink_test.go`, `cmd/assent/run_provider_symlink_test.go`; Verify: `go test ./internal/provider/... -run TestRepoFileSymlink && go test ./cmd/assent/... -run TestRunCheckout`; Level: L0+L1
 
 ---
 
@@ -260,6 +261,7 @@ invalid (never APPROVE via missing owner); C7 seedable in S10.
 Requirements:
 - **REQ-E5-S08-01** *(closes REF-GAP-1)* — `resource→owner` resolves for a fixture map. Test: `internal/provider/builtin/resource_owner_test.go`; Verify: `go test ./internal/provider/... -run TestResourceOwnerResolves`; Level: L0
 - **REQ-E5-S08-02** *(fail-safe)* — unknown resource does not resolve to an empty owner that would satisfy ownership. Test: same; Verify: `go test ./internal/provider/... -run TestResourceOwnerUnknownFailClosed`; Level: L0
+- **REQ-E5-S08-03** *(SECURITY · D-129 / D-130)* — the ownership registry decides who may approve, so it is a decision input: it loads from the **target ref** first and the checkout only as a fallback (never a shadow — ADR-0015 §1 / GUIDELINES §Safety 3), and a registry reached through a symlink is refused with an error (no client ⇒ the owner fact never resolves), never a partial load. Test: `internal/provider/builtin/resource_owner_symlink_test.go`, `cmd/assent/provider_host_registry_test.go`; Verify: `go test ./internal/provider/... -run TestResourceOwnerRegistry && go test ./cmd/assent/... -run TestResourceOwnerRegistry`; Level: L0+L1
 
 ---
 
